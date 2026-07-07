@@ -20,4 +20,29 @@ class SeverityJudgeTest {
     void shouldJudgeTimeoutAsWarning() {
         assertThat(judge.judge(FailureType.TIMEOUT)).isEqualTo(Severity.WARNING);
     }
+
+    @Test
+    void shouldJudgePermissionDeniedAsFatal() {
+        assertThat(judge.judge(FailureType.PERMISSION_DENIED)).isEqualTo(Severity.FATAL);
+    }
+
+    @Test
+    void shouldJudgeRuntimeErrorAsError() {
+        assertThat(judge.judge(FailureType.RUNTIME_ERROR)).isEqualTo(Severity.ERROR);
+    }
+
+    @Test
+    void shouldJudgeTestFailureAsError() {
+        assertThat(judge.judge(FailureType.TEST_FAILURE)).isEqualTo(Severity.ERROR);
+    }
+
+    @Test
+    void shouldJudgeFileNotFoundAsWarning() {
+        assertThat(judge.judge(FailureType.FILE_NOT_FOUND)).isEqualTo(Severity.WARNING);
+    }
+
+    @Test
+    void shouldJudgeUnknownAsError() {
+        assertThat(judge.judge(FailureType.UNKNOWN)).isEqualTo(Severity.ERROR);
+    }
 }
