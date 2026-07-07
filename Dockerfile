@@ -1,14 +1,11 @@
-FROM eclipse-temurin:17-jdk AS build
+FROM maven:17-eclipse-temurin AS build
 WORKDIR /app
 COPY pom.xml .
-RUN apt-get update && apt-get install -y maven
 RUN mvn dependency:go-offline
 COPY src ./src
-COPY harness.yaml .
 RUN mvn package -DskipTests
 
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:21-jre
 WORKDIR /app
-COPY --from=build /app/target/harness-1.0.0.jar harness.jar
-COPY harness.yaml .
-ENTRYPOINT ["java", "-jar", "harness.jar"]
+COPY --from=build /app/target/harness-*.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
