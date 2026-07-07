@@ -20,10 +20,14 @@ public class FileGuardrail implements Guardrail {
         String path = (String) actionParams.get("path");
         if (path == null) return GuardResult.pass();
 
-        Path resolved = projectRoot.resolve(path).normalize();
-        if (!resolved.startsWith(projectRoot)) {
-            return GuardResult.block("File access outside project root: " + path);
+        try {
+            Path resolved = projectRoot.resolve(path).normalize();
+            if (!resolved.startsWith(projectRoot)) {
+                return GuardResult.block("File access outside project root: " + path);
+            }
+            return GuardResult.pass();
+        } catch (Exception e) {
+            return GuardResult.block("Invalid file path: " + path + " (" + e.getMessage() + ")");
         }
-        return GuardResult.pass();
     }
 }
