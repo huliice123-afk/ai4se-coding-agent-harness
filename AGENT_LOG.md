@@ -1,89 +1,147 @@
-﻿# AGENT_LOG.md 鈥?瀹炵幇杩囩▼鏃ュ織
+﻿# AGENT_LOG.md — 实现过程日志
 
-## 娴佺▼鍋忕璇存槑
+## 流程偏离说明
 
-### Git Worktrees 鍋忕
+### Git Worktrees 偏离（初次实现）
 
-**鍋忕椤?*锛歋uperpowers 涓冩宸ヤ綔娴佽姹備娇鐢?`git worktrees` 涓烘瘡涓ā鍧楀垱寤虹嫭绔嬪伐浣滃尯锛屾瘡涓?worktree 瀵瑰簲涓€涓?PR銆傛湰椤圭洰鏈娇鐢?worktrees锛岀洿鎺ュ湪 master 鍒嗘敮涓婂紑鍙戙€?
-**鍘熷洜**锛?1. 寮€鍙戠幆澧冧负 Windows锛実it worktree 鍦?Windows 涓婄殑璺緞澶勭悊锛堝挨鍏舵槸涓枃璺緞 `D:\鏂囦欢\Agent`锛夊瓨鍦ㄥ凡鐭ラ棶棰?2. 缃戠粶闄愬埗瀵艰嚧 GitHub 杩炴帴闇€瑕佷唬鐞嗭紝褰卞搷浜?PR 宸ヤ綔娴佺殑鍙鎬?3. 23 涓?task 涔嬮棿渚濊禆鍏崇郴绱у瘑锛堝 AgentLoop 渚濊禆鎵€鏈変笅灞傛ā鍧楋級锛屽嵆浣夸娇鐢?worktrees锛屽ぇ閮ㄥ垎 task 浠嶉渶涓茶鎵ц
+**偏离项**：Superpowers 七步工作流要求使用 `git worktrees` 为每个模块创建独立工作区，每个 worktree 对应一个 PR。本项目初次实现未使用 worktrees，直接在 master 分支上开发。
 
-**鏇夸唬鎺柦**锛?- 姣忎釜 task 鐢辩嫭绔?subagent 鎵ц锛屾瘡娆℃彁浜ゅ墠杩愯瀹屾暣娴嬭瘯
-- 姣忔 commit 淇濇寔浜嗘湁鎰忎箟鐨勭矑搴︼紙涓€涓?task 涓€涓?commit锛?- 浣跨敤 `requesting-code-review` 鍦ㄥ疄鐜板畬鎴愬悗杩涜浜嗗畬鏁村鏌?
-### 鍐峰惎鍔ㄩ獙璇佸亸绂?
-**鍋忕椤?*锛毬?.5 瑕佹眰姝ｅ紡瀹炵幇鍓嶇敤涓嶅悓 agent 浠呭嚟 SPEC+PLAN 璇曞疄鐜?1-2 涓?task銆?
-**鍘熷洜**锛氬紑鍙戞椂缃戠粶闄愬埗瀵艰嚧 GitHub 鏃犳硶绋冲畾杩炴帴锛屽喎鍚姩鎵€闇€鐨勪笉鍚?agent 鐜鏃犳硶姝ｅ父閰嶇疆銆?
-**鏇夸唬鎺柦**锛氬湪瀹炵幇瀹屾垚鍚庯紝浣跨敤 `requesting-code-review` 娲鹃仯浜嗕竴涓嫭绔嬬殑瀹℃煡 agent锛岃 agent 浠呭嚟 SPEC+PLAN 瀹℃煡浜嗗叏閮ㄤ唬鐮侊紝鍙戠幇浜?4 涓棶棰橈紙HITL 缂哄け銆丮emoryRetriever 纭紪鐮併€丄gentLoop 娴嬭瘯涓嶈冻銆丯etworkGuardrail 閰嶇疆鏈娇鐢級锛岃捣鍒颁簡绫讳技"涓嶅悓瑙嗚鍙戠幇 spec/瀹炵幇缂洪櫡"鐨勪綔鐢ㄣ€?
+**原因**：
+1. 开发环境为 Windows，git worktree 在 Windows 上的路径处理（尤其是中文路径 `D:\文件\Agent`）存在已知问题
+2. 网络限制导致 GitHub 连接需要代理，影响了 PR 工作流的可行性
+3. 23 个 task 之间依赖关系紧密（如 AgentLoop 依赖所有下层模块），即便使用 worktrees，大部分 task 仍需串行执行
+
+**替代措施**：
+- 每个 task 由独立 subagent 执行，每次提交前运行完整测试
+- 每次 commit 保持了有意义的粒度（一个 task 一个 commit）
+- 使用 `requesting-code-review` 在实现完成后进行了完整审查
+
+### 冷启动验证偏离
+
+**偏离项**：§4.5 要求正式实现前用不同 agent 仅凭 SPEC+PLAN 试实现 1-2 个 task。
+
+**原因**：开发时网络限制导致 GitHub 无法稳定连接，冷启动所需的不同 agent 环境无法正常配置。
+
+**替代措施**：在实现完成后，使用 `requesting-code-review` 派遣了一个独立的审查 agent，该 agent 仅凭 SPEC+PLAN 审查了全部代码，发现了 4 个问题（HITL 缺失、MemoryRetriever 硬编码、AgentLoop 测试不足、NetworkGuardrail 配置未使用），起到了类似"不同视角发现 spec/实现缺陷"的作用。
+
 ---
 
-## 瀹炵幇鏃ュ織
+## 初次实现日志
 
-### 2026-07-07 鈥?椤圭洰鍒濆鍖?
-| 鏃堕棿 | Task | 鎶€鑳?| 鍏抽敭 Prompt | Subagent 杈撳嚭 | 浜哄伐骞查 |
+### 2026-07-07 — 项目初始化
+
+| 时间 | Task | 技能 | 关键 Prompt | Subagent 输出 | 人工干预 |
 |------|------|------|-------------|---------------|---------|
-| 18:00 | brainstorming | brainstorming | 閫愭纭鎶€鏈爤銆侀噸鐐圭淮搴︺€佸伐鍏烽泦銆佹姢鏍忋€佽蹇嗐€佸垎鍙?| SPEC.md 瀹屾垚 | 姣忔纭鍚庣瀛?|
-| 18:10 | writing-plans | writing-plans | 灏?SPEC 鍒嗚В涓?23 涓?Task | PLAN.md 瀹屾垚 | 瀹℃煡 PLAN 鐨勪緷璧栧叧绯?|
-| 18:15 | AGENTS.md | 鈥?| 鍐欏叆椤圭洰绾︽潫 | AGENTS.md 瀹屾垚 | 澧炲姞妯″瀷鍒囨崲绛栫暐 |
+| 18:00 | brainstorming | brainstorming | 逐步确认技术栈、重点维度、工具集、护栏、记忆、分发 | SPEC.md 完成 | 每次确认后签字 |
+| 18:10 | writing-plans | writing-plans | 将 SPEC 分解为 23 个 Task | PLAN.md 完成 | 审查 PLAN 的依赖关系 |
+| 18:15 | AGENTS.md | — | 写入项目约束 | AGENTS.md 完成 | 增加模型切换策略 |
 
-### 2026-07-07 鈥?瀹炵幇闃舵
+### 2026-07-07 — 实现阶段
 
-| 鏃堕棿 | Task | 瑙﹀彂鎶€鑳?| 鎻愪氦 | 娴嬭瘯缁撴灉 | 浜哄伐骞查 |
+| 时间 | Task | 触发技能 | 提交 | 测试结果 | 人工干预 |
 |------|------|---------|------|---------|---------|
-| 18:20 | T1: Scaffolding | subagent-driven | c7eec63 | mvn compile SUCCESS | 鏃?|
-| 18:22 | T2: LLM models | subagent-driven | 5a7f71b | 6/6 tests | 鏃?|
-| 18:24 | T3: MockLlmProvider | subagent-driven | 364daa1 | 10/10 tests | 鏃?|
-| 18:26 | T4: Tool+Registry | subagent-driven | 3ba5fe0 | 13/13 tests | 鏃?|
-| 18:28 | T5: FileTool | subagent-driven | 4f98912 | 4/4 tests | 鏃?|
-| 18:30 | T6: ShellTool | subagent-driven | 2b83f6e | 3/3 tests | 鏃?|
-| 18:32 | T7: GitTool | subagent-driven | c0cf45f | 3/3 tests | 鏃?|
-| 18:34 | T8: SearchTool | subagent-driven | 99e7dc7 | 26/26 tests | 鏃?|
-| 18:36 | T9: CommandGuardrail | subagent-driven | 95d62dd | 4/4 tests | 鏃?|
-| 18:38 | T10: File+NetworkGuardrail | subagent-driven | 980bfcb | 36/36 tests | 鏃?|
-| 18:40 | T11: GuardrailChain | subagent-driven | d97c6a9 | 3/3 tests | 鏃?|
-| 18:42 | T12: Config | subagent-driven | 5248647 | 40/40 tests | 鏃?|
-| 18:44 | T13: Memory | subagent-driven | 502fc82 | 48/48 tests | 鏃?|
-| 18:46 | T14: FailureClassifier | subagent-driven | c817a40 | 55/55 tests | 鏃?|
-| 18:48 | T15: FeedbackPipeline | subagent-driven | 231aa02 | 65/65 tests | 鏃?|
-| 18:50 | T16: Agent core | subagent-driven | 5de8eb0 | 71/71 tests | 鏃?|
-| 18:52 | T17: AgentLoop | subagent-driven | 29ecb34 | 72/72 tests | 鏃?|
-| 18:54 | T18: ClaudeProvider | subagent-driven | dc41d10 | 73/73 tests | 鏃?|
-| 18:56 | T19: CLI | subagent-driven | cb18525 | 73/73 tests | 鏃?|
-| 18:58 | T20: Demo | subagent-driven | 24df6b2 | 76/76 tests | 鏃?|
-| 19:00 | T21: CI | subagent-driven | abe2677 | 鈥?| 鏃?|
-| 19:02 | T22: Docker | subagent-driven | f8be641 | 鈥?| 鏃?|
-| 19:04 | T23: README | subagent-driven | 5759d4a | 鈥?| 鏃?|
+| 18:20 | T1: Scaffolding | subagent-driven | c7eec63 | mvn compile SUCCESS | 无 |
+| 18:22 | T2: LLM models | subagent-driven | 5a7f71b | 6/6 tests | 无 |
+| 18:24 | T3: MockLlmProvider | subagent-driven | 364daa1 | 10/10 tests | 无 |
+| 18:26 | T4: Tool+Registry | subagent-driven | 3ba5fe0 | 13/13 tests | 无 |
+| 18:28 | T5: FileTool | subagent-driven | 4f98912 | 4/4 tests | 无 |
+| 18:30 | T6: ShellTool | subagent-driven | 2b83f6e | 3/3 tests | 无 |
+| 18:32 | T7: GitTool | subagent-driven | c0cf45f | 3/3 tests | 无 |
+| 18:34 | T8: SearchTool | subagent-driven | 99e7dc7 | 26/26 tests | 无 |
+| 18:36 | T9: CommandGuardrail | subagent-driven | 95d62dd | 4/4 tests | 无 |
+| 18:38 | T10: File+NetworkGuardrail | subagent-driven | 980bfcb | 36/36 tests | 无 |
+| 18:40 | T11: GuardrailChain | subagent-driven | d97c6a9 | 3/3 tests | 无 |
+| 18:42 | T12: Config | subagent-driven | 5248647 | 40/40 tests | 无 |
+| 18:44 | T13: Memory | subagent-driven | 502fc82 | 48/48 tests | 无 |
+| 18:46 | T14: FailureClassifier | subagent-driven | c817a40 | 55/55 tests | 无 |
+| 18:48 | T15: FeedbackPipeline | subagent-driven | 231aa02 | 65/65 tests | 无 |
+| 18:50 | T16: Agent core | subagent-driven | 5de8eb0 | 71/71 tests | 无 |
+| 18:52 | T17: AgentLoop | subagent-driven | 29ecb34 | 72/72 tests | 无 |
+| 18:54 | T18: ClaudeProvider | subagent-driven | dc41d10 | 73/73 tests | 无 |
+| 18:56 | T19: CLI | subagent-driven | cb18525 | 73/73 tests | 无 |
+| 18:58 | T20: Demo | subagent-driven | 24df6b2 | 76/76 tests | 无 |
+| 19:00 | T21: CI | subagent-driven | abe2677 | — | 无 |
+| 19:02 | T22: Docker | subagent-driven | f8be641 | — | 无 |
+| 19:04 | T23: README | subagent-driven | 5759d4a | — | 无 |
 
-### 2026-07-07 鈥?浠ｇ爜瀹℃煡涓庝慨澶?
-| 鏃堕棿 | 鎿嶄綔 | 瑙﹀彂鎶€鑳?| 鎻愪氦 | 缁撴灉 |
+### 2026-07-07 — 代码审查与修复
+
+| 时间 | 操作 | 触发技能 | 提交 | 结果 |
 |------|------|---------|------|------|
-| 19:10 | 浠ｇ爜瀹℃煡 | requesting-code-review | 鈥?| 鍙戠幇 4 涓棶棰?|
-| 19:15 | 淇 HITL + MemoryRetriever + AgentLoop | subagent-driven | 441904d | 84/84 tests |
-| 19:20 | 娴嬭瘯璐ㄩ噺瀹¤ | 鈥?| 鈥?| 鍙戠幇 3 涓棶棰?|
-| 19:25 | 淇娴嬭瘯璐ㄩ噺 | subagent-driven | f8b47f9 | 92/92 tests |
-
-### 2026-07-07 鈥?瀹屾垚闃舵
-
-| 鏃堕棿 | 鎿嶄綔 | 鎻愪氦 | 缁撴灉 |
-|------|------|------|------|
-| 19:30 | SPEC_PROCESS.md | 鈥?| 瀹屾垚 |
-| 19:35 | AGENT_LOG.md | 鈥?| 瀹屾垚 |
+| 19:10 | 代码审查 | requesting-code-review | — | 发现 4 个问题 |
+| 19:15 | 修复 HITL + MemoryRetriever + AgentLoop | subagent-driven | 441904d | 84/84 tests |
+| 19:20 | 测试质量审计 | — | — | 发现 3 个问题 |
+| 19:25 | 修复测试质量 | subagent-driven | f8b47f9 | 92/92 tests |
 
 ---
 
-## 鍏抽敭 Context 閰嶇疆
+## 重构日志（2026-07-07 ~ 2026-07-08）
 
-### 姣忎釜 Task 鐨?Subagent Prompt 缁撴瀯
+### 重构目标
+
+将线性 master 历史重构为 10 个 feature 分支 + PR 工作流，同时修复 agent 功能问题（tool_call 解析、空转、聊天模式）。
+
+### 重构流程
+
+| 时间 | PR | 分支 | 触发技能 | 提交 | 测试 | 人工干预 |
+|------|-----|------|---------|------|------|---------|
+| 21:30 | Task 0 | — | controller | 8946fde | mvn compile | 备份 master-backup，reset 到 scaffolding |
+| 21:35 | PR #2 | feature/llm-layer | subagent-driven | e56dc50 | 11 tests | 无 |
+| 21:45 | PR #3 | feature/tools | subagent-driven | 1279b7c | 27 tests | 无 |
+| 22:00 | PR #4 | feature/guardrails | subagent-driven | 036c009 | 42 tests | 无 |
+| 22:15 | PR #5 | feature/config-memory | subagent-driven | 80de4aa | 59 tests | 无 |
+| 22:30 | PR #6 | feature/feedback | subagent-driven | 02131f3 | 79 tests | 修复命名偏差（getMessage, COMPILATION_ERROR, CRITICAL） |
+| 22:45 | PR #7 ★ | feature/core-loop | subagent-driven | db3a94e | 105 tests | 修复 chat 模式历史、工具调用记录、上下文排序 |
+| 23:00 | PR #8 ★ | feature/deepseek-provider | subagent-driven | da639e7 | 112 tests | 无 |
+| 23:15 | PR #9 | feature/cli-demo | subagent-driven | 45a9e92 | 115 tests | 无 |
+| 23:30 | PR #10 | feature/ci-docker | subagent-driven | 9ac01f5 | 115 tests | 无 |
+| 23:45 | PR #11 ★ | feature/web-ui | subagent-driven | f085020 | 115 tests | 无 |
+| 00:00 | — | — | controller | 73d99f7 | 115 tests | 修复 CI Linux wildcard 测试 + gitignore |
+
+### 关键修复
+
+1. **PR #7 (core-loop) ★**：修复了 agent 空转问题。ActionParser 现在正确解析 LlmResponse 的 tool_call，AgentLoop 在无 tool_call 时停机而非空转。KEY CHECKPOINT：mock LLM 4 轮完成（不空转），纯文本 1 轮停机，空响应 1 轮停机。
+2. **PR #8 (deepseek-provider) ★**：DeepSeekProvider 正确解析 OpenAI 格式 tool_calls（choices[0].message.tool_calls[0].function.name/arguments）。API key 逻辑修复为先判断 provider 再检查对应 key。
+3. **CI 修复**：FileGuardrail 在 Linux 上 wildcard path 测试失败（`*` 在 Linux 是合法路径字符）。修复为显式检查通配符字符，所有平台一致拦截。
+
+### 重构中使用的 Skill
+
+- `brainstorming`：设计重构方案（全量重构 vs 增量 vs 重建）
+- `writing-plans`：生成 13 个 task 的详细实现计划
+- `writing-skills`：创建 `refactor-with-worktrees` skill 约束重构过程
+- `subagent-driven-development`：每个 PR 派 fresh subagent 实现 + task reviewer 审查
+- `using-git-worktrees`：每个 PR 通过 `.worktrees/` 隔离开发
+
+---
+
+## 关键 Context 配置
+
+### 每个 Task 的 Subagent Prompt 结构
 
 ```
-1. Task 鎻忚堪锛堢洰鏍?+ 鏂囦欢鍒楄〃锛?2. 瀹屾暣鐨勬祴璇曚唬鐮侊紙鍏堢孩鍚庣豢锛?3. 瀹屾暣鐨勫疄鐜颁唬鐮?4. 楠岃瘉鍛戒护锛坢vn test锛?5. 鎻愪氦鍛戒护
+1. Task 描述（目标 + 文件列表）
+2. 完整的测试代码（先红后绿）
+3. 完整的实现代码
+4. 验证命令（mvn test）
+5. 提交命令
 ```
 
-### 鍏ㄥ眬绾︽潫锛堟瘡涓?Subagent 閮介伒瀹堬級
+### 全局约束（每个 Subagent 都遵守）
 
 - Java 17 + Maven + JUnit 5 + Mockito + AssertJ
-- TDD 寮哄埗锛堝厛鍐欏け璐ユ祴璇曪紝鍐嶆渶灏忓疄鐜帮紝鍐嶉噸鏋勶級
-- 绂佹纭紪鐮佸嚟鎹?- 鎵€鏈夋満鍒舵槸纭畾鎬т唬鐮侊紝涓嶄緷璧?LLM
+- TDD 强制（先写失败测试，再最小实现，再重构）
+- 禁止硬编码凭据
+- 所有机制是确定性代码，不依赖 LLM
 
 ---
 
-## 瀛﹀埌鐨勬暀璁?
-1. **Subagent 鍒嗘淳鏁堢巼楂?*锛?3 涓?task 鍏ㄩ儴鐢?subagent 瀹屾垚锛屾瘡涓?task 2-3 鍒嗛挓锛屾棤涓€娆″け璐ャ€?2. **浠ｇ爜瀹℃煡涓嶅彲鎴栫己**锛氬鏌ュ彂鐜颁簡 4 涓垜鑷繁鏃犳硶娉ㄦ剰鍒扮殑闂锛屽挨鍏舵槸 HITL 鐨勭己澶便€?3. **娴嬭瘯璐ㄩ噺瀹¤鏈変环鍊?*锛氬彂鐜?ClaudeProviderTest 鏄┖澹虫祴璇曪紝琛ュ厖浜?mock server 娴嬭瘯銆?4. **Git worktrees 鍦?Windows 涓枃璺緞涓嬫湁鍏煎鎬ч棶棰?*锛氳繖鏄湭鏉ラ渶瑕佹敼杩涚殑鍦版柟銆?5. **缃戠粶浠ｇ悊瀵艰嚧 GitHub 杩炴帴涓嶇ǔ瀹?*锛歚git push` 闇€瑕侀厤缃?`http.proxy`锛岃繖鏄紑鍙戠幆澧冪殑鍓嶇疆姝ラ銆
+## 学到的教训
+
+1. **Subagent 分派效率高**：23 个 task 全部由 subagent 完成，每个 task 2-3 分钟，无一次失败。
+2. **代码审查不可或缺**：审查发现了 4 个我自己无法注意到的问题，尤其是 HITL 的缺失。
+3. **测试质量审计有价值**：发现 ClaudeProviderTest 是空壳测试，补充了 mock server 测试。
+4. **Git worktrees 在 Windows 中文路径下有兼容性问题**：这是未来需要改进的地方。
+5. **网络代理导致 GitHub 连接不稳定**：`git push` 需要配置 `http.proxy`，这是开发环境的前置步骤。
+6. **重构比初次实现更复杂**：cherry-pick 在 API 变更后经常失败，需要手动适配代码。但重构过程也是修复功能问题的好时机。
+7. **CI 平台差异不可忽视**：Windows 和 Linux 对路径字符的合法性判断不同，测试必须考虑跨平台。
+8. **Subagent-driven + worktree + PR 流程确实有效**：每个 PR 独立 review，问题在 merge 前被发现和修复。
