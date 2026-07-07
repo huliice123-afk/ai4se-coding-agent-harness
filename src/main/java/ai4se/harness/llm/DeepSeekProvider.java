@@ -55,7 +55,11 @@ public class DeepSeekProvider implements LlmProvider {
                 if (!response.isSuccessful()) {
                     return new LlmResponse("API error: " + response.code() + " " + responseBody, null, null, "end_turn");
                 }
-                return parseResponse(responseBody);
+                LlmResponse parsed = parseResponse(responseBody);
+                if (!parsed.hasAction() && (parsed.getText() == null || parsed.getText().isBlank())) {
+                    System.err.println("DeepSeek raw response: " + responseBody);
+                }
+                return parsed;
             }
         } catch (IOException e) {
             return new LlmResponse("API call failed: " + e.getMessage(), null, null, "end_turn");
@@ -118,6 +122,9 @@ public class DeepSeekProvider implements LlmProvider {
         }
 
         String content = (String) message.get("content");
-        return new LlmResponse(content != null ? content : "", null, null, finishReason);
+        if (content == null) {
+            return new LlmResponse("", null, null, finishReason);
+        }
+        return new LlmResponse(content, null, null, finishReason);
     }
 }
