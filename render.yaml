@@ -8,6 +8,8 @@ services:
     envVars:
       - key: ANTHROPIC_API_KEY
         sync: false
+      - key: DEEPSEEK_API_KEY
+        sync: false
       - key: PORT
         value: "5000"
     healthCheckPath: /
