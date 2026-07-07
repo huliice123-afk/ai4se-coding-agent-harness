@@ -1,3 +1,9 @@
 package ai4se.harness.tools;
 
-public class Tool {}
+import java.util.Map;
+
+public interface Tool {
+    String name();
+    String description();
+    ToolResult execute(Map<String, Object> params);
+}
