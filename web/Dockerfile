@@ -19,4 +19,4 @@ RUN pip install --no-cache-dir -r web/requirements.txt
 COPY web/ ./web/
 WORKDIR /app/web
 EXPOSE 5000
-CMD gunicorn -k gthread -w 2 -b 0.0.0.0:$PORT app:app
+CMD python app.py
