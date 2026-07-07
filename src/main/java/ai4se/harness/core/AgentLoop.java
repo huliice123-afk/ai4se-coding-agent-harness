@@ -8,6 +8,8 @@ import ai4se.harness.guardrails.GuardrailChain;
 import ai4se.harness.llm.*;
 import ai4se.harness.memory.MemoryRetriever;
 import ai4se.harness.tools.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Optional;
 
@@ -63,7 +65,7 @@ public class AgentLoop {
             }
 
             GuardResult guard = guardrails.check(action.getToolName(), action.getParams());
-            if (guard.isBlock()) {
+            if (!handleGuardrailResult(guard, action)) {
                 Feedback fb = new Feedback(false, ai4se.harness.feedback.FailureType.COMMAND_REJECTED,
                     ai4se.harness.feedback.Severity.FATAL, guard.getReason());
                 history.add(new Message("user", "[FEEDBACK] " + fb.getSuggestion()));
@@ -100,5 +102,27 @@ public class AgentLoop {
         }
 
         return resultSummary.toString();
+    }
+
+    boolean handleGuardrailResult(GuardResult guard, Action action) {
+        if (guard.isPass()) {
+            return true;
+        }
+        if (guard.isBlock()) {
+            return false;
+        }
+        if (guard.isHitl()) {
+            System.out.println("[WARNING] Human-in-the-loop: " + guard.getReason());
+            System.out.println("Action: " + action.getToolName() + " " + action.getParams());
+            System.out.print("Proceed? (y/n): ");
+            try {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+                String input = reader.readLine();
+                return input != null && input.trim().equalsIgnoreCase("y");
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        return false;
     }
 }
