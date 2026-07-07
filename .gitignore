@@ -27,3 +27,7 @@ logs/
 # Agent output
 /app-output/
 *.class
+
+.superpowers/
+HelloWorld.java
+HelloWorld.class
