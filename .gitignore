@@ -23,3 +23,7 @@ Thumbs.db
 *.log
 logs/
 .worktrees/
+
+# Agent output
+/app-output/
+*.class
