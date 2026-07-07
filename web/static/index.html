@@ -19,16 +19,14 @@
   <div id="main">
     <div id="sidebar">
       <div class="sidebar-section">
-        <div class="sidebar-title">TOOLS</div>
-        <div class="tool-item"><span class="tool-icon">📄</span> file</div>
-        <div class="tool-item"><span class="tool-icon">💻</span> shell</div>
-        <div class="tool-item"><span class="tool-icon">📦</span> git</div>
-        <div class="tool-item"><span class="tool-icon">🔍</span> search</div>
-      </div>
-      <div class="sidebar-divider"></div>
-      <div class="sidebar-section">
-        <div class="sidebar-title">SESSIONS</div>
+        <div class="sidebar-title">HISTORY</div>
         <div id="session-list"></div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="sidebar-divider"></div>
+        <div class="tool-item" onclick="location.reload()">
+          <span class="tool-icon">↻</span> New Session
+        </div>
       </div>
     </div>
     <div id="terminal">

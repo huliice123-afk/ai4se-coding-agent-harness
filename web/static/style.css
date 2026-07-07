@@ -131,10 +131,27 @@ html, body {
   margin: 4px 0;
 }
 
+.sidebar-footer {
+  margin-top: auto;
+}
+
 #session-list {
   font-size: 12px;
   color: var(--text-dim);
   padding: 4px 16px;
+}
+
+#session-list div {
+  padding: 3px 0;
+  cursor: pointer;
+  border-radius: 3px;
+  padding-left: 4px;
+  transition: background 0.1s;
+}
+
+#session-list div:hover {
+  background: rgba(255,255,255,0.06);
+  color: var(--text);
 }
 
 /* Terminal */
