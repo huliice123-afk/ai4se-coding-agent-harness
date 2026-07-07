@@ -8,15 +8,15 @@
 
 - **语言**: Java 17+
 - **构建工具**: Maven
-- **LLM 供应商**: Anthropic Claude API
+- **LLM 供应商**: DeepSeek (OpenAI-compatible)
 - **测试框架**: JUnit 5 + Mockito + AssertJ
 - **HTTP 客户端**: OkHttp 或 Java 11 HttpClient
 
 ## 模型使用策略
 
-- **日常开发**: 使用 DeepSeek / GLM（成本低，编码能力足够处理常规任务）
-- **强编码任务**: 遇到复杂算法、复杂架构设计、疑难 bug 修复时，切换到 Claude（编码能力最强）
-- **Harness 运行时**: 使用 Claude API（本项目的 harness 本身调用 Claude 完成编码任务）
+- **日常开发**: 使用 GLM（成本低，编码能力足够处理常规任务）
+- **强编码任务**: 遇到复杂算法、复杂架构设计、疑难 bug 修复时，使用 DeepSeek（编码能力强）
+- **Harness 运行时**: 使用 DeepSeek API（本项目的 harness 本身调用 DeepSeek 完成编码任务）
 - **Mock 测试**: 一律使用 MockLlmProvider，不调用任何真实 LLM
 
 ## 代码规范
@@ -32,7 +32,7 @@
 harness/
 ├── src/main/java/ai4se/harness/
 │   ├── core/          # 主循环、Agent 核心
-│   ├── llm/           # LLM 抽象层（接口 + Claude 实现）
+│   ├── llm/           # LLM 抽象层（接口 + DeepSeek 实现）
 │   ├── tools/         # 工具定义与分发
 │   ├── guardrails/    # 治理护栏
 │   ├── feedback/      # 反馈闭环
@@ -59,8 +59,8 @@ harness/
 
 ### 安全
 - API Key 绝不硬编码、绝不提交到 Git、绝不写入日志
-- 使用操作系统凭据存储（Windows Credential Manager / macOS Keychain）
-- `.env` 文件仅用于本地开发，已加入 `.gitignore`
+- 使用 .env 文件存储 API Key（已加入 `.gitignore`），`config show-key` 显示掩码
+- `.env` 文件仅用于本地开发
 
 ## 验收标准
 
