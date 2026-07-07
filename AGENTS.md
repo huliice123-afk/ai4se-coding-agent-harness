@@ -12,6 +12,13 @@
 - **测试框架**: JUnit 5 + Mockito + AssertJ
 - **HTTP 客户端**: OkHttp 或 Java 11 HttpClient
 
+## 模型使用策略
+
+- **日常开发**: 使用 DeepSeek / GLM（成本低，编码能力足够处理常规任务）
+- **强编码任务**: 遇到复杂算法、复杂架构设计、疑难 bug 修复时，切换到 Claude（编码能力最强）
+- **Harness 运行时**: 使用 Claude API（本项目的 harness 本身调用 Claude 完成编码任务）
+- **Mock 测试**: 一律使用 MockLlmProvider，不调用任何真实 LLM
+
 ## 代码规范
 
 - 遵循 Java 标准命名规范（PascalCase 类名、camelCase 方法/变量、UPPER_SNAKE 常量）
