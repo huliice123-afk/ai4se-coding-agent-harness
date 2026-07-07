@@ -38,7 +38,18 @@ public class HarnessApp implements Callable<Integer> {
                 return 1;
             }
 
-            LlmProvider llm = new ClaudeProvider(apiKey, config.getLlm().getModel());
+            String provider = config.getLlm().getProvider();
+            LlmProvider llm;
+            if ("deepseek".equals(provider)) {
+                String deepseekKey = cm.getKey().orElse(System.getenv("DEEPSEEK_API_KEY"));
+                if (deepseekKey == null) {
+                    System.err.println("No DeepSeek API key found. Set DEEPSEEK_API_KEY env var.");
+                    return 1;
+                }
+                llm = new DeepSeekProvider(deepseekKey, config.getLlm().getModel());
+            } else {
+                llm = new ClaudeProvider(apiKey, config.getLlm().getModel());
+            }
             ToolRegistry registry = new ToolRegistry();
             Path projectRoot = Path.of(".").toAbsolutePath().normalize();
             registry.register(new FileTool(projectRoot));
