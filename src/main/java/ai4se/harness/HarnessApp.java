@@ -32,14 +32,9 @@ public class HarnessApp implements Callable<Integer> {
             HarnessConfig config = ConfigLoader.load(configPath);
 
             CredentialManager cm = new CredentialManager();
-            String apiKey = cm.getKey().orElse(System.getenv("ANTHROPIC_API_KEY"));
-            if (apiKey == null) {
-                System.err.println("No API key found. Run 'harness config set-key' first.");
-                return 1;
-            }
-
             String provider = config.getLlm().getProvider();
             LlmProvider llm;
+
             if ("deepseek".equals(provider)) {
                 String deepseekKey = cm.getKey().orElse(System.getenv("DEEPSEEK_API_KEY"));
                 if (deepseekKey == null) {
@@ -48,6 +43,11 @@ public class HarnessApp implements Callable<Integer> {
                 }
                 llm = new DeepSeekProvider(deepseekKey, config.getLlm().getModel());
             } else {
+                String apiKey = cm.getKey().orElse(System.getenv("ANTHROPIC_API_KEY"));
+                if (apiKey == null) {
+                    System.err.println("No API key found. Run 'harness config set-key' first.");
+                    return 1;
+                }
                 llm = new ClaudeProvider(apiKey, config.getLlm().getModel());
             }
             ToolRegistry registry = new ToolRegistry();
