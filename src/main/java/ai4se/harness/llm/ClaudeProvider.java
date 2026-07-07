@@ -16,10 +16,16 @@ public class ClaudeProvider implements LlmProvider {
     private final String apiKey;
     private final String model;
     private final OkHttpClient client;
+    private final String baseUrl;
 
     public ClaudeProvider(String apiKey, String model) {
+        this(apiKey, model, API_URL);
+    }
+
+    ClaudeProvider(String apiKey, String model, String baseUrl) {
         this.apiKey = apiKey;
         this.model = model;
+        this.baseUrl = baseUrl;
         this.client = new OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
@@ -33,7 +39,7 @@ public class ClaudeProvider implements LlmProvider {
             String json = mapper.writeValueAsString(body);
 
             Request request = new Request.Builder()
-                .url(API_URL)
+                .url(baseUrl)
                 .header("x-api-key", apiKey)
                 .header("anthropic-version", ANTHROPIC_VERSION)
                 .header("content-type", "application/json")
