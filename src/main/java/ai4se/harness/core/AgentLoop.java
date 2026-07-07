@@ -93,6 +93,7 @@ public class AgentLoop {
             }
 
             System.out.println("[Tool] " + action.getToolName());
+            history.add(new Message("assistant", "Calling " + action.getToolName() + " with " + action.getToolArgs()));
 
             Map<String, Object> params = parseParams(action.getToolArgs());
             GuardResult guard = guardrails.check(action.getToolName(), params);
@@ -149,13 +150,16 @@ public class AgentLoop {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Chat mode. Type '退出' to exit.");
 
+        Conversation history = new Conversation();
+        StringBuilder chatSummary = new StringBuilder();
+
         while (true) {
             System.out.print("> ");
             String input = scanner.nextLine();
             if (input.equals("退出")) break;
 
-            Conversation history = new Conversation();
             history.add(new Message("user", input));
+            chatSummary.append("User: ").append(input).append("\n");
             int round = 0;
 
             while (round < config.getLoop().getMaxRounds()) {
@@ -175,9 +179,14 @@ public class AgentLoop {
                     String text = response.getText();
                     if (text != null && !text.isBlank()) {
                         System.out.println("[Agent] " + text);
+                        history.add(new Message("assistant", text));
+                        chatSummary.append("Agent: ").append(text).append("\n");
                     }
                     break;
                 }
+
+                System.out.println("[Tool] " + action.getToolName());
+                history.add(new Message("assistant", "Calling " + action.getToolName() + " with " + action.getToolArgs()));
 
                 Map<String, Object> params = parseParams(action.getToolArgs());
                 GuardResult guard = guardrails.check(action.getToolName(), params);
@@ -192,9 +201,26 @@ public class AgentLoop {
                     .map(t -> t.execute(action.getToolArgs()))
                     .orElse(ToolResult.error("Unknown tool: " + action.getToolName()));
                 System.out.println("[Tool] " + action.getToolName() + " → " + toolResult.getOutput());
-                history.add(new Message("user", "[RESULT] " + toolResult.getOutput()));
+
+                if (feedback != null) {
+                    Feedback fb = feedback.collect(toolResult);
+                    if (!fb.isSuccess()) {
+                        history.add(new Message("user", "[FEEDBACK] Failure type: " + fb.getType() +
+                            "\nError details: " + toolResult.getOutput() +
+                            "\nSuggestion: " + fb.getMessage()));
+                    } else {
+                        history.add(new Message("user", "[RESULT] " + toolResult.getOutput()));
+                    }
+                    for (String addition : feedback.getContextAdditions()) {
+                        history.add(new Message("user", "[CONTEXT] " + addition));
+                    }
+                } else {
+                    history.add(new Message("user", "[RESULT] " + toolResult.getOutput()));
+                }
             }
         }
+
+        memory.saveSessionSummary("Chat session.\n" + chatSummary);
     }
 
     private Map<String, Object> parseParams(String args) {

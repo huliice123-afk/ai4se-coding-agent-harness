@@ -14,8 +14,8 @@ public class ContextAssembler {
         String systemPrompt = buildSystemPrompt(tools, memory);
         messages.add(new Message("system", systemPrompt));
 
-        messages.addAll(history.getMessages());
         messages.add(new Message("user", task));
+        messages.addAll(history.getMessages());
 
         return messages;
     }
