@@ -8,7 +8,7 @@ class CorrectionSuggesterTest {
 
     @Test
     void shouldSuggestCompileFix() {
-        String suggestion = suggester.suggest(FailureType.COMPILE_ERROR, "Main.java:5: error: ';' expected");
+        String suggestion = suggester.suggest(FailureType.COMPILATION_ERROR, "Main.java:5: error: ';' expected");
         assertThat(suggestion).contains("compilation error");
         assertThat(suggestion).contains("Main.java:5");
     }

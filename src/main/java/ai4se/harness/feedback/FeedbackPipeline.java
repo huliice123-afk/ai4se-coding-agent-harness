@@ -23,8 +23,8 @@ public class FeedbackPipeline {
 
     public Feedback collect(ToolResult result) {
         Feedback feedback = process(result, "tool", 0);
-        if (!feedback.isSuccess() && feedback.getSuggestion() != null) {
-            contextAdditions.add(feedback.getSuggestion());
+        if (!feedback.isSuccess() && feedback.getMessage() != null) {
+            contextAdditions.add(feedback.getMessage());
         }
         return feedback;
     }

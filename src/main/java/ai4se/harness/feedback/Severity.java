@@ -1,7 +1,7 @@
 package ai4se.harness.feedback;
 
 public enum Severity {
-    FATAL,
+    CRITICAL,
     ERROR,
     WARNING,
     INFO

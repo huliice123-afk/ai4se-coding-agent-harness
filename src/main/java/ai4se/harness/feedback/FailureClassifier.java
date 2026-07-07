@@ -7,7 +7,7 @@ public class FailureClassifier {
         String lower = output.toLowerCase();
 
         if (lower.contains("error:") && (lower.contains(".java:") || lower.contains(".kt:"))) {
-            return FailureType.COMPILE_ERROR;
+            return FailureType.COMPILATION_ERROR;
         }
         if (lower.contains("tests run:") && lower.contains("failures:")) {
             return FailureType.TEST_FAILURE;

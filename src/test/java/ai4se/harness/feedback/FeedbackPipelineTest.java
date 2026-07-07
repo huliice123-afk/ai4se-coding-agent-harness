@@ -20,10 +20,10 @@ class FeedbackPipelineTest {
         ToolResult result = new ToolResult(false, "Main.java:5: error: ';' expected", 1);
         Feedback feedback = pipeline.process(result, "shell", 1);
         assertThat(feedback.isSuccess()).isFalse();
-        assertThat(feedback.getType()).isEqualTo(FailureType.COMPILE_ERROR);
+        assertThat(feedback.getType()).isEqualTo(FailureType.COMPILATION_ERROR);
         assertThat(feedback.getSeverity()).isEqualTo(Severity.ERROR);
-        assertThat(feedback.getSuggestion()).contains("compilation error");
-        assertThat(feedback.getSuggestion()).contains("Main.java:5");
+        assertThat(feedback.getMessage()).contains("compilation error");
+        assertThat(feedback.getMessage()).contains("Main.java:5");
     }
 
     @Test
@@ -31,9 +31,9 @@ class FeedbackPipelineTest {
         ToolResult result = new ToolResult(false, "Main.java:5: error: ';' expected", 1);
         Feedback feedback = pipeline.collect(result);
         assertThat(feedback.isSuccess()).isFalse();
-        assertThat(feedback.getType()).isEqualTo(FailureType.COMPILE_ERROR);
+        assertThat(feedback.getType()).isEqualTo(FailureType.COMPILATION_ERROR);
         assertThat(feedback.getSeverity()).isEqualTo(Severity.ERROR);
-        assertThat(feedback.getSuggestion()).isNotBlank();
+        assertThat(feedback.getMessage()).isNotBlank();
     }
 
     @Test

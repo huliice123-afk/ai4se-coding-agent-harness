@@ -10,7 +10,7 @@ class FailureClassifierTest {
     void shouldClassifyCompileError() {
         FailureType type = classifier.classify(
             "Main.java:5: error: ';' expected", 1, "shell");
-        assertThat(type).isEqualTo(FailureType.COMPILE_ERROR);
+        assertThat(type).isEqualTo(FailureType.COMPILATION_ERROR);
     }
 
     @Test

@@ -1,7 +1,7 @@
 package ai4se.harness.feedback;
 
 public enum FailureType {
-    COMPILE_ERROR,
+    COMPILATION_ERROR,
     RUNTIME_ERROR,
     TEST_FAILURE,
     COMMAND_REJECTED,

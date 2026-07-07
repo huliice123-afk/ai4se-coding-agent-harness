@@ -4,9 +4,9 @@ import java.util.Map;
 
 public class SeverityJudge {
     private static final Map<FailureType, Severity> MAPPING = Map.of(
-        FailureType.COMMAND_REJECTED, Severity.FATAL,
-        FailureType.PERMISSION_DENIED, Severity.FATAL,
-        FailureType.COMPILE_ERROR, Severity.ERROR,
+        FailureType.COMMAND_REJECTED, Severity.CRITICAL,
+        FailureType.PERMISSION_DENIED, Severity.CRITICAL,
+        FailureType.COMPILATION_ERROR, Severity.ERROR,
         FailureType.RUNTIME_ERROR, Severity.ERROR,
         FailureType.TEST_FAILURE, Severity.ERROR,
         FailureType.TIMEOUT, Severity.WARNING,

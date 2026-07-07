@@ -19,6 +19,6 @@ class FeedbackCollectorTest {
         ToolResult result = new ToolResult(false, "Main.java:5: error: ';' expected", 1);
         Feedback feedback = collector.collect(result, "shell");
         assertThat(feedback.isSuccess()).isFalse();
-        assertThat(feedback.getType()).isEqualTo(FailureType.COMPILE_ERROR);
+        assertThat(feedback.getType()).isEqualTo(FailureType.COMPILATION_ERROR);
     }
 }

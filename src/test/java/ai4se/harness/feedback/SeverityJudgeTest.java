@@ -8,12 +8,12 @@ class SeverityJudgeTest {
 
     @Test
     void shouldJudgeCompileErrorAsError() {
-        assertThat(judge.judge(FailureType.COMPILE_ERROR)).isEqualTo(Severity.ERROR);
+        assertThat(judge.judge(FailureType.COMPILATION_ERROR)).isEqualTo(Severity.ERROR);
     }
 
     @Test
     void shouldJudgeCommandRejectedAsFatal() {
-        assertThat(judge.judge(FailureType.COMMAND_REJECTED)).isEqualTo(Severity.FATAL);
+        assertThat(judge.judge(FailureType.COMMAND_REJECTED)).isEqualTo(Severity.CRITICAL);
     }
 
     @Test

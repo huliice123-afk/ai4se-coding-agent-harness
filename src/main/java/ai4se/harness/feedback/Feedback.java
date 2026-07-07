@@ -16,5 +16,5 @@ public class Feedback {
     public boolean isSuccess() { return success; }
     public FailureType getType() { return type; }
     public Severity getSeverity() { return severity; }
-    public String getSuggestion() { return suggestion; }
+    public String getMessage() { return suggestion; }
 }
