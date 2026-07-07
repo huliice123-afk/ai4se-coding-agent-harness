@@ -2,15 +2,14 @@ package ai4se.harness.llm;
 
 import org.junit.jupiter.api.Test;
 import java.util.List;
-import java.util.Map;
 import static org.assertj.core.api.Assertions.*;
 
 class MockLlmProviderTest {
     @Test
-    void shouldReturnScriptedResponse() {
+    void scriptModeShouldReturnToolCallWhenKeywordMatched() {
         MockLlmProvider mock = new MockLlmProvider();
         mock.whenInputContains("write test").thenReturn(
-            new LlmResponse(null, "shell", Map.of("command", "mvn test"), "tool_use")
+            new LlmResponse(null, "shell", "{\"command\":\"mvn test\"}", "tool_use")
         );
 
         LlmResponse resp = mock.complete(
@@ -18,9 +17,9 @@ class MockLlmProviderTest {
             List.of()
         );
 
-        assertThat(resp.hasAction()).isTrue();
-        assertThat(resp.getActionName()).isEqualTo("shell");
-        assertThat(resp.getActionParams()).containsEntry("command", "mvn test");
+        assertThat(resp.hasToolCall()).isTrue();
+        assertThat(resp.getToolName()).isEqualTo("shell");
+        assertThat(resp.getToolArgs()).isEqualTo("{\"command\":\"mvn test\"}");
     }
 
     @Test
@@ -33,20 +32,26 @@ class MockLlmProviderTest {
 
         assertThat(resp.getText()).isEqualTo("Task completed.");
         assertThat(resp.getStopReason()).isEqualTo("end_turn");
+        assertThat(resp.hasToolCall()).isFalse();
     }
 
     @Test
-    void shouldReturnSequenceResponses() {
+    void sequenceModeShouldReturnResponsesInOrder() {
         MockLlmProvider mock = new MockLlmProvider();
         mock.setSequence(List.of(
-            new LlmResponse(null, "shell", Map.of("command", "step1"), "tool_use"),
-            new LlmResponse(null, "shell", Map.of("command", "step2"), "tool_use"),
+            new LlmResponse(null, "shell", "{\"command\":\"step1\"}", "tool_use"),
+            new LlmResponse(null, "shell", "{\"command\":\"step2\"}", "tool_use"),
             new LlmResponse("all done", null, null, "end_turn")
         ));
 
-        assertThat(mock.complete(List.of(), List.of()).getActionParams().get("command")).isEqualTo("step1");
-        assertThat(mock.complete(List.of(), List.of()).getActionParams().get("command")).isEqualTo("step2");
-        assertThat(mock.complete(List.of(), List.of()).getText()).isEqualTo("all done");
+        LlmResponse first = mock.complete(List.of(), List.of());
+        LlmResponse second = mock.complete(List.of(), List.of());
+        LlmResponse third = mock.complete(List.of(), List.of());
+
+        assertThat(first.getToolArgs()).isEqualTo("{\"command\":\"step1\"}");
+        assertThat(second.getToolArgs()).isEqualTo("{\"command\":\"step2\"}");
+        assertThat(third.getText()).isEqualTo("all done");
+        assertThat(third.hasToolCall()).isFalse();
     }
 
     @Test
@@ -58,6 +63,7 @@ class MockLlmProviderTest {
 
         mock.complete(List.of(), List.of());
         LlmResponse resp = mock.complete(List.of(), List.of());
+
         assertThat(resp.getText()).isEqualTo("Task completed.");
     }
 }
