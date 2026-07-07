@@ -77,9 +77,23 @@
 
 ## 5. 冷启动验证
 
-由于开发过程中网络限制（GitHub 连接需要代理），冷启动验证（用不同 agent 仅凭 SPEC+PLAN 试实现 1-2 个 task）未能在开发前完成。这是一个已知的流程偏离，在 AGENT_LOG.md 中记录了原因。
+### 5.1 验证方法
 
-替代方案：代码审查（requesting-code-review）作为冷启动的替代，一个独立的审查 agent 发现了 4 个问题，起到了类似"不同视角发现 spec 缺陷"的作用。
+使用 `explore` 型 subagent（不同于实现阶段使用的 `general` 型），在全新会话中，仅提供 `SPEC.md` + `PLAN.md`，不提供任何对话历史或额外上下文。指定其实现 PLAN.md 中 Task 5（FileTool）。
+
+### 5.2 验证结果
+
+**SPEC/PLAN 清晰度**：通过。agent 完全理解了 SPEC 和 PLAN，无歧义地理解了 FileTool 的接口、路径遍历保护、read/write/glob 三个操作。
+
+**发现的问题**：
+- PLAN.md 中 Task 5 的测试期望 `"outside project root"`，但实际实现返回 `"Access denied: path outside project root"`。因为测试使用 `contains()` 子串匹配，所以测试通过，但文字不一致。这是一个 PLAN 与实现之间的小缺陷。
+
+**agent 的困惑**：
+- Task 5 的代码已经存在（项目已实现完毕），agent 误以为需要重新创建。这是项目进度追踪问题，非 SPEC 缺陷。
+
+### 5.3 结论
+
+SPEC 和 PLAN 质量足够清晰，冷启动 agent 能够独立理解需求并验证实现。未发现需要修订 SPEC 或 PLAN 的实质性缺陷。
 
 ## 6. 修订记录
 
