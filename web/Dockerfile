@@ -2,9 +2,7 @@
 FROM eclipse-temurin:17-jdk AS java-build
 WORKDIR /app
 COPY pom.xml .
-COPY .mvn .mvn
-COPY mvnw.cmd .
-RUN apt-get update && apt-get install -y maven
+RUN apt-get update && apt-get install -y maven && mvn dependency:go-offline -q
 COPY src ./src
 COPY harness.yaml .
 RUN mvn package -DskipTests -q
