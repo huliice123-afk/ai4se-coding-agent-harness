@@ -343,6 +343,7 @@ Loop: feedback → context → next round (or stop)
 | Jackson | YAML 解析 | SnakeYAML |
 | JUnit 5 + Mockito | 测试 | — |
 | Maven | 构建 | — |
+| GitHub Actions | CI，每次 push 自动运行 `mvn test` | — |
 
 ---
 
@@ -481,6 +482,16 @@ Coding 领域的反馈信号是**客观、确定、可回灌的**：
 | AC7 | 机制演示脚本可运行 | 运行演示脚本，观察三项演示 |
 | AC8 | API Key 不落盘、不提交、不泄露 | 检查代码、Git 历史、日志 |
 | AC9 | Docker 和 JAR 均可分发运行 | `docker run` 和 `java -jar` 分别验证 |
+
+## 10.1 机制演示（A 方向额外要求）
+
+提交一个可重复运行的演示脚本（`demo.sh` / `demo.ps1`），在 mock LLM 下确定性复现以下三项行为：
+
+1. **护栏拦截**: 构造一个含 `rm -rf` 的动作，验证 `CommandGuardrail` 返回 BLOCK/HITL
+2. **反馈闭环**: 注入一次编译失败（mock LLM 第 1 轮返回错误代码 → 执行后反馈采集 → 第 2 轮 mock LLM 收到反馈并返回修正后的代码 → 验证修正成功）
+3. **重点维度行为**: 演示失败分类器的完整流水线（输入 stderr → 输出 `FailureType` + `Severity` + 修正建议），覆盖至少 3 种失败类型
+
+所有演示不依赖网络和真实 LLM，通过 `mvn test` 或独立脚本运行。
 
 ---
 
