@@ -4,9 +4,39 @@
 
 **Goal:** 构建一个 Java 实现的 Coding Agent Harness，从零实现 agent 主循环、工具分发、治理护栏、反馈闭环、记忆和配置六个维度，反馈闭环为重点深入维度。
 
+## Task 完成状态
+
+| Task | 描述 | 状态 | Commit | PR |
+|------|------|------|--------|-----|
+| T1 | Maven 项目骨架 | ✅ 完成 | 8946fde | PR #1 (scaffolding) |
+| T2 | LLM 抽象层 + 接口 | ✅ 完成 | e56dc50 | PR #2 (llm-layer) |
+| T3 | MockLlmProvider | ✅ 完成 | e56dc50 | PR #2 (llm-layer) |
+| T4 | 工具接口 + ToolRegistry | ✅ 完成 | 1279b7c | PR #3 (tools) |
+| T5 | FileTool | ✅ 完成 | 1279b7c | PR #3 (tools) |
+| T6 | ShellTool | ✅ 完成 | 1279b7c | PR #3 (tools) |
+| T7 | GitTool | ✅ 完成 | 1279b7c | PR #3 (tools) |
+| T8 | SearchTool | ✅ 完成 | 1279b7c | PR #3 (tools) |
+| T9 | 护栏接口 + CommandGuardrail | ✅ 完成 | 036c009 | PR #4 (guardrails) |
+| T10 | FileGuardrail + NetworkGuardrail | ✅ 完成 | 036c009 | PR #4 (guardrails) |
+| T11 | GuardrailChain | ✅ 完成 | 036c009 | PR #4 (guardrails) |
+| T12 | ConfigLoader + CredentialManager | ✅ 完成 | 80de4aa | PR #5 (config-memory) |
+| T13 | FileMemoryStore + MemoryRetriever | ✅ 完成 | 80de4aa | PR #5 (config-memory) |
+| T14 | FailureClassifier（重点维度） | ✅ 完成 | 02131f3 | PR #6 (feedback) |
+| T15 | FeedbackPipeline | ✅ 完成 | 02131f3 | PR #6 (feedback) |
+| T16 | ActionParser + ContextAssembler + StopCondition | ✅ 完成 | db3a94e | PR #7 (core-loop) ★ |
+| T17 | AgentLoop 主循环 | ✅ 完成 | db3a94e | PR #7 (core-loop) ★ |
+| T18 | DeepSeekProvider（原 ClaudeProvider） | ✅ 完成 | da639e7 | PR #8 (deepseek) ★ |
+| T19 | CLI + HarnessApp | ✅ 完成 | 45a9e92 | PR #9 (cli-demo) |
+| T20 | 机制演示 Demo | ✅ 完成 | 45a9e92 | PR #9 (cli-demo) |
+| T21 | CI (GitHub Actions) | ✅ 完成 | 9ac01f5 | PR #10 (ci-docker) |
+| T22 | Docker 分发 | ✅ 完成 | 9ac01f5 | PR #10 (ci-docker) |
+| T23 | README | ✅ 完成 | f085020 | PR #11 (web-ui) |
+
+**重构说明**：初次实现为线性 master 历史（23 commits）。后通过全量 git 历史重构，重组为 10 个 feature 分支 + PR 工作流。每个 PR 通过 worktree 隔离开发，经 subagent 实现 + task reviewer 审查后合并。详见 AGENT_LOG.md 重构日志。
+
 **Architecture:** CLI 应用，用户输入自然语言任务 → 主循环组织上下文 → 调用 LLM → 解析动作 → 护栏检查 → 执行工具 → 反馈采集 → 回灌 LLM 循环。LLM 通过抽象层注入，支持 mock 离线测试。
 
-**Tech Stack:** Java 17, Maven, JUnit 5 + Mockito + AssertJ, OkHttp (HTTP 客户端), Jackson (YAML), Anthropic Claude API, Picocli (CLI 框架)
+**Tech Stack:** Java 17, Maven, JUnit 5 + Mockito + AssertJ, OkHttp (HTTP 客户端), Jackson (YAML), DeepSeek API (OpenAI-compatible), Picocli (CLI 框架)
 
 ## Global Constraints
 
