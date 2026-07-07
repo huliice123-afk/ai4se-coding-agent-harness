@@ -17,7 +17,7 @@ def index():
 
 @socketio.on("connect")
 def handle_connect():
-    emit("stdout", {"line": "\x1b[32m✓ Connected to Coding Agent Harness\x1b[0m"})
+    emit("stdout", {"line": "Connected to Coding Agent Harness"})
 
 @socketio.on("run_task")
 def handle_run_task(data):
@@ -26,7 +26,7 @@ def handle_run_task(data):
         emit("task_error", {"error": "Empty task"})
         return
 
-    emit("stdout", {"line": f"\x1b[36m> {task}\x1b[0m"})
+    emit("stdout", {"line": f"> {task}"})
 
     if not os.path.exists(HARNESS_JAR):
         emit("task_error", {"error": f"JAR not found: {HARNESS_JAR}. Run mvn package first."})
@@ -42,24 +42,11 @@ def handle_run_task(data):
             line = line.rstrip()
             if not line:
                 continue
-            formatted = format_line(line)
-            emit("stdout", {"line": formatted})
+            emit("stdout", {"line": line})
         proc.wait()
         emit("task_done", {"summary": "Task completed"})
     except Exception as e:
         emit("task_error", {"error": str(e)})
-
-def format_line(line):
-    lower = line.lower()
-    if "error" in lower or "fail" in lower or "✗" in line:
-        return f"\x1b[31m{line}\x1b[0m"
-    if "success" in lower or "complete" in lower or "✓" in line or "pass" in lower:
-        return f"\x1b[32m{line}\x1b[0m"
-    if "warn" in lower or "block" in lower or "danger" in lower or "⚠" in line:
-        return f"\x1b[33m{line}\x1b[0m"
-    if "round" in lower or "[" in line:
-        return f"\x1b[36m{line}\x1b[0m"
-    return line
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
