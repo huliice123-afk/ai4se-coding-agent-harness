@@ -20,6 +20,10 @@ public class FileGuardrail implements Guardrail {
         String path = (String) actionParams.get("path");
         if (path == null) return GuardResult.pass();
 
+        if (path.contains("*") || path.contains("?") || path.contains("[")) {
+            return GuardResult.block("Wildcard paths not allowed: " + path);
+        }
+
         try {
             Path resolved = projectRoot.resolve(path).normalize();
             if (!resolved.startsWith(projectRoot)) {
