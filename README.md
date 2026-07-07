@@ -64,3 +64,38 @@ src/main/java/ai4se/harness/
 
 - 凭据存储仅支持内存模式（Windows Credential Manager 集成待完成）
 - 仅支持 Claude API，其他 LLM 供应商待扩展
+
+## Web UI
+
+IDE 风格的 Web 界面，通过浏览器与 agent 交互。
+
+### 本地启动
+
+```bash
+# 1. 构建 JAR
+mvn package -DskipTests
+
+# 2. 安装 Python 依赖
+cd web
+pip install -r requirements.txt
+
+# 3. 启动
+python app.py
+# 浏览器打开 http://localhost:5000
+```
+
+### Docker 部署
+
+```bash
+docker build -f web/Dockerfile -t coding-agent-harness-web .
+docker run -p 5000:5000 -e ANTHROPIC_API_KEY=sk-ant-... coding-agent-harness-web
+```
+
+### Render 部署
+
+项目根目录包含 `render.yaml`，可直接通过 Render Blueprint 一键部署：
+
+1. 在 [Render](https://render.com) 创建 Blueprint 实例
+2. 连接 GitHub 仓库
+3. 设置环境变量 `ANTHROPIC_API_KEY`
+4. 自动部署
