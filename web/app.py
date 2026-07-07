@@ -6,7 +6,7 @@ from flask_socketio import SocketIO, emit
 
 app = Flask(__name__, template_folder="templates", static_folder="static", static_url_path="")
 app.config["SECRET_KEY"] = os.urandom(24).hex()
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="gevent")
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 
 HARNESS_JAR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "target", "harness-1.0.0.jar")
 HARNESS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
