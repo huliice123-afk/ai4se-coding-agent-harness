@@ -58,11 +58,19 @@ public class AgentLoop {
 
             Action action = parser.parse(response);
             if (action == null) {
-                history.add(new Message("assistant", response.getText()));
-                resultSummary.append(response.getText());
+                String text = response.getText();
+                if (text == null || text.isBlank()) {
+                    System.out.println("LLM returned empty response, stopping");
+                    return "Agent stopped: received empty response from LLM after " + round + " rounds.";
+                }
+                System.out.println(text);
+                history.add(new Message("assistant", text));
+                resultSummary.append(text).append("\n");
                 correctionRound = 0;
                 continue;
             }
+
+            System.out.println("[Tool: " + action.getToolName() + "]");
 
             GuardResult guard = guardrails.check(action.getToolName(), action.getParams());
             if (!handleGuardrailResult(guard, action)) {
