@@ -1,0 +1,19 @@
+llm:
+  provider: claude
+  model: claude-sonnet-4-20250514
+  max_tokens: 4096
+tools:
+  allowed: [file, shell, git, search]
+  shell_timeout: 30
+guardrails:
+  hitl: true
+  command_denylist: [rm -rf, sudo, chmod 777, mkfs, shutdown]
+  network_blocked: true
+  network_allowed_hosts: []
+feedback:
+  max_rounds: 3
+loop:
+  max_rounds: 10
+memory:
+  store_path: .harness/memory
+  search_top_k: 3
