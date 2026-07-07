@@ -1,8 +1,10 @@
 package ai4se.harness.config;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class HarnessConfig {
     private LlmConfig llm;
     private ToolsConfig tools;
@@ -53,12 +55,16 @@ public class HarnessConfig {
         private List<String> commandDenylist;
         @JsonProperty("network_blocked")
         private boolean networkBlocked;
+        @JsonProperty("network_allowed_hosts")
+        private List<String> networkAllowedHosts;
         public boolean isHitl() { return hitl; }
         public void setHitl(boolean hitl) { this.hitl = hitl; }
         public List<String> getCommandDenylist() { return commandDenylist; }
         public void setCommandDenylist(List<String> commandDenylist) { this.commandDenylist = commandDenylist; }
         public boolean isNetworkBlocked() { return networkBlocked; }
         public void setNetworkBlocked(boolean networkBlocked) { this.networkBlocked = networkBlocked; }
+        public List<String> getNetworkAllowedHosts() { return networkAllowedHosts; }
+        public void setNetworkAllowedHosts(List<String> networkAllowedHosts) { this.networkAllowedHosts = networkAllowedHosts; }
     }
 
     public static class FeedbackConfig {
