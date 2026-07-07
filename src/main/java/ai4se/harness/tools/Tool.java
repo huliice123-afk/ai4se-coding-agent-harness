@@ -1,3 +1,8 @@
 package ai4se.harness.tools;
 
-public class Tool {}
+public interface Tool {
+    String getName();
+    String getDescription();
+    String getParameters();
+    ToolResult execute(String args);
+}
