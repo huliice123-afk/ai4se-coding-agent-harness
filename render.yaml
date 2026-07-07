@@ -6,8 +6,6 @@ services:
     dockerContext: .
     plan: free
     envVars:
-      - key: ANTHROPIC_API_KEY
-        sync: false
       - key: DEEPSEEK_API_KEY
         sync: false
       - key: PORT
