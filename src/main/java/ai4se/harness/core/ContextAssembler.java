@@ -22,12 +22,13 @@ public class ContextAssembler {
 
     private String buildSystemPrompt(List<Tool> tools, MemoryRetriever memory) {
         StringBuilder sb = new StringBuilder();
-        sb.append("You are a coding agent. You can use tools to complete tasks.\n\n");
+        sb.append("You are a coding agent that completes tasks by calling tools. Respond with a tool call or text.\n\n");
         sb.append("Available tools:\n");
-        for (Tool tool : tools) {
-            sb.append("- ").append(tool.name()).append(": ").append(tool.description()).append("\n");
-        }
-        sb.append("\nFormat your response as a tool call or text.\n");
+        sb.append("- file: params={action:\"read\"|\"write\"|\"glob\", path:\"relative/path\", content:\"text for write\"}\n");
+        sb.append("- shell: params={command:\"shell command\"}\n");
+        sb.append("- git: params={action:\"status\"|\"diff\"|\"log\"|\"branch\"}\n");
+        sb.append("- search: params={action:\"grep\"|\"glob\", pattern:\"search pattern\"}\n");
+        sb.append("\nWhen calling a tool, always provide ALL required params. After each tool result, call the next tool or respond with text when done.\n");
 
         List<String> relevantMemories = memory.search("convention project", 3);
         if (!relevantMemories.isEmpty()) {

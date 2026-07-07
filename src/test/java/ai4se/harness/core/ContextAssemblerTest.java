@@ -25,7 +25,7 @@ class ContextAssemblerTest {
 
         assertThat(messages).hasSizeGreaterThanOrEqualTo(2);
         assertThat(messages.get(0).getRole()).isEqualTo("system");
-        assertThat(messages.get(0).getContent()).contains("test");
+        assertThat(messages.get(0).getContent()).contains("coding agent");
         assertThat(messages.get(messages.size() - 1).getRole()).isEqualTo("user");
         assertThat(messages.get(messages.size() - 1).getContent()).isEqualTo("write a test");
     }
