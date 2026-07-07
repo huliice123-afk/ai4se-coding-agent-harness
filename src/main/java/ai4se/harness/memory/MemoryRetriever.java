@@ -37,4 +37,8 @@ public class MemoryRetriever {
         }
         return results.stream().limit(topK).collect(Collectors.toList());
     }
+
+    public void save(String key, String content) {
+        store.save(key, content);
+    }
 }

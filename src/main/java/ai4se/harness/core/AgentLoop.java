@@ -45,6 +45,11 @@ public class AgentLoop {
         int correctionRound = 0;
         StringBuilder resultSummary = new StringBuilder();
 
+        String lastSession = memory.search("session task", 1).stream().findFirst().orElse("");
+        if (!lastSession.isEmpty()) {
+            System.out.println("Previous session: " + lastSession.substring(0, Math.min(80, lastSession.length())));
+        }
+
         while (round < config.getLoop().getMaxRounds()) {
             round++;
             System.out.println("[Round " + round + "]");
@@ -91,6 +96,7 @@ public class AgentLoop {
             }
 
             ToolResult toolResult = tool.get().execute(action.getParams());
+            System.out.println(toolResult.getOutput());
             Feedback fb = feedback.process(toolResult, action.getToolName(), round);
 
             if (!fb.isSuccess()) {
@@ -109,7 +115,11 @@ public class AgentLoop {
             }
         }
 
-        return resultSummary.toString();
+        String summary = resultSummary.toString();
+        if (!summary.isEmpty()) {
+            memory.save("session_latest", "Task: " + task + "\nResult: " + summary);
+        }
+        return summary;
     }
 
     boolean handleGuardrailResult(GuardResult guard, Action action) {
