@@ -33,10 +33,11 @@ def handle_run_task(data):
         return
 
     try:
+        env = os.environ.copy()
         proc = subprocess.Popen(
             ["java", "-jar", HARNESS_JAR, "run", task],
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            text=True, bufsize=1, cwd=HARNESS_DIR
+            text=True, bufsize=1, cwd=HARNESS_DIR, env=env
         )
         for line in proc.stdout:
             line = line.rstrip()

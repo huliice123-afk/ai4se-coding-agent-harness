@@ -71,7 +71,6 @@ function sendTask() {
   setInputEnabled(false);
   input.value = "";
 
-  appendLine("> " + task, "cmd");
   socket.emit("run_task", { task: task });
 }
 
