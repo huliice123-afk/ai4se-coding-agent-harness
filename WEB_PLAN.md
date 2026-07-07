@@ -104,5 +104,5 @@ Socket.IO client:
 ## Task 6: 部署到 Render
 
 - 创建 `render.yaml` 或手动配置
-- 设置环境变量 `ANTHROPIC_API_KEY`
+- 设置环境变量 `DEEPSEEK_API_KEY`
 - 验证部署

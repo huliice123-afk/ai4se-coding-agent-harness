@@ -1,10 +1,10 @@
 import subprocess
 import os
 import sys
-from flask import Flask, send_from_directory
+from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 
-app = Flask(__name__, static_folder="static", static_url_path="")
+app = Flask(__name__, template_folder="templates", static_folder="static", static_url_path="")
 app.config["SECRET_KEY"] = os.urandom(24).hex()
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="gevent")
 
@@ -13,11 +13,11 @@ HARNESS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 
 @app.route("/")
 def index():
-    return send_from_directory("static", "index.html")
+    return render_template("index.html")
 
 @socketio.on("connect")
 def handle_connect():
-    emit("stdout", {"line": "Connected to Coding Agent Harness"})
+    pass
 
 @socketio.on("run_task")
 def handle_run_task(data):
@@ -25,8 +25,6 @@ def handle_run_task(data):
     if not task:
         emit("task_error", {"error": "Empty task"})
         return
-
-    emit("stdout", {"line": f"> {task}"})
 
     if not os.path.exists(HARNESS_JAR):
         emit("task_error", {"error": f"JAR not found: {HARNESS_JAR}. Run mvn package first."})

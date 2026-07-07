@@ -7,13 +7,13 @@
 ## 2. 架构
 
 ```
-Browser (IDE-style Chat UI)
+Browser (ChatGPT-style Chat UI)
     │  WebSocket (Socket.IO)
     ▼
 Python Flask + Flask-SocketIO (Render)
     │  subprocess
     ▼
-harness.jar (AgentLoop → Claude API)
+harness.jar (AgentLoop → DeepSeek API)
 ```
 
 ## 3. 后端 (Python)
@@ -115,14 +115,14 @@ for line in proc.stdout:
 - 平台：Render
 - 构建：`pip install -r requirements.txt`
 - 运行：`gunicorn -k gevent -w 1 app:app`
-- 环境变量：`ANTHROPIC_API_KEY`（从 Render 环境变量注入）
+- 环境变量：`DEEPSEEK_API_KEY`（从 Render 环境变量注入）
 - 前端 + 后端同进程，无需 CDN
 
 ## 6. 验收标准
 
-- 浏览器打开后显示 IDE 风格界面
-- 输入任务后 agent 开始执行，终端实时显示输出
-- 工具调用、错误、护栏拦截以不同颜色/图标区分
+- 浏览器打开后显示 Chat 风格界面（用户消息在右、agent 在左）
+- 输入消息后 agent 开始执行，消息流实时显示输出
+- 工具调用以可折叠块展示，错误、护栏拦截以不同颜色区分
 - 连接断开时状态指示器变红
 - `python app.py` 一键启动
 - 可在 Render 上部署运行
