@@ -26,6 +26,7 @@ public class HarnessConfig {
     public MemoryConfig getMemory() { return memory; }
     public void setMemory(MemoryConfig memory) { this.memory = memory; }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class LlmConfig {
         private String provider;
         private String model;
@@ -39,6 +40,7 @@ public class HarnessConfig {
         public void setMaxTokens(int maxTokens) { this.maxTokens = maxTokens; }
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ToolsConfig {
         private List<String> allowed;
         @JsonProperty("shell_timeout")
@@ -49,6 +51,7 @@ public class HarnessConfig {
         public void setShellTimeout(int shellTimeout) { this.shellTimeout = shellTimeout; }
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class GuardrailsConfig {
         private boolean hitl;
         @JsonProperty("command_denylist")
@@ -67,6 +70,7 @@ public class HarnessConfig {
         public void setNetworkAllowedHosts(List<String> networkAllowedHosts) { this.networkAllowedHosts = networkAllowedHosts; }
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class FeedbackConfig {
         @JsonProperty("max_rounds")
         private int maxRounds;
@@ -74,6 +78,7 @@ public class HarnessConfig {
         public void setMaxRounds(int maxRounds) { this.maxRounds = maxRounds; }
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class LoopConfig {
         @JsonProperty("max_rounds")
         private int maxRounds;
@@ -81,6 +86,7 @@ public class HarnessConfig {
         public void setMaxRounds(int maxRounds) { this.maxRounds = maxRounds; }
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class MemoryConfig {
         @JsonProperty("store_path")
         private String storePath;
