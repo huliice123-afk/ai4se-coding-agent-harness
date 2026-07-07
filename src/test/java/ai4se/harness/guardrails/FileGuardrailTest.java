@@ -27,4 +27,18 @@ class FileGuardrailTest {
         GuardResult result = guard.check("shell", Map.of("command", "ls"));
         assertThat(result.isPass()).isTrue();
     }
+
+    @Test
+    void shouldNotThrowOnWildcardPath(@TempDir Path tempDir) {
+        FileGuardrail guard = new FileGuardrail(tempDir);
+        assertThatCode(() -> guard.check("file", Map.of("action", "read", "path", "*.java")))
+            .doesNotThrowAnyException();
+    }
+
+    @Test
+    void shouldBlockWildcardPath(@TempDir Path tempDir) {
+        FileGuardrail guard = new FileGuardrail(tempDir);
+        GuardResult result = guard.check("file", Map.of("action", "read", "path", "*.java"));
+        assertThat(result.isBlock()).isTrue();
+    }
 }
