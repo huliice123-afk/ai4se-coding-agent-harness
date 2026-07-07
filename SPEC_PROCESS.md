@@ -91,9 +91,20 @@
 **agent 的困惑**：
 - Task 5 的代码已经存在（项目已实现完毕），agent 误以为需要重新创建。这是项目进度追踪问题，非 SPEC 缺陷。
 
-### 5.3 结论
+### 5.4 补充冷启动：独立 Agent 验证
 
-SPEC 和 PLAN 质量足够清晰，冷启动 agent 能够独立理解需求并验证实现。未发现需要修订 SPEC 或 PLAN 的实质性缺陷。
+使用另一个独立 agent（非开发用 agent），仅提供 SPEC.md + PLAN.md，在 `cold/` 目录下独立实现了 Task 2（LLM 模型层）和 Task 4（Tool 接口）：
+
+| 冷启动产出 | 文件 | 测试结果 |
+|-----------|------|---------|
+| Message.java | 完全一致 | 2/2 PASS |
+| LlmResponse.java | 完全一致 | 2/2 PASS |
+| Conversation.java | 完全一致 | 2/2 PASS |
+| LlmProvider.java | 完全一致 | — |
+| Tool.java | 完全一致 | — |
+| ToolResult.java | 完全一致 | — |
+
+**结论**：SPEC 和 PLAN 的代码定义精确到逐行级别，冷启动 agent 产出的代码与主实现完全一致。SPEC 质量合格。未发现任何歧义或需要修订的地方。
 
 ## 6. 修订记录
 
