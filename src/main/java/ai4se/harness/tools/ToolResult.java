@@ -17,5 +17,6 @@ public class ToolResult {
 
     public boolean isSuccess() { return success; }
     public String getOutput() { return output; }
+    public String getError() { return success ? null : output; }
     public int getExitCode() { return exitCode; }
 }

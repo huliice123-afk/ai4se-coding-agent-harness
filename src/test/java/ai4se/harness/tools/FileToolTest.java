@@ -3,7 +3,6 @@ package ai4se.harness.tools;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.*;
-import java.util.Map;
 import static org.assertj.core.api.Assertions.*;
 
 class FileToolTest {
@@ -13,7 +12,7 @@ class FileToolTest {
         Files.writeString(file, "hello world");
 
         FileTool tool = new FileTool(tempDir);
-        ToolResult result = tool.execute(Map.of("action", "read", "path", "test.txt"));
+        ToolResult result = tool.execute("{\"action\":\"read\",\"path\":\"test.txt\"}");
 
         assertThat(result.isSuccess()).isTrue();
         assertThat(result.getOutput()).contains("hello world");
@@ -22,7 +21,7 @@ class FileToolTest {
     @Test
     void shouldWriteFile(@TempDir Path tempDir) {
         FileTool tool = new FileTool(tempDir);
-        ToolResult result = tool.execute(Map.of("action", "write", "path", "out.txt", "content", "hello"));
+        ToolResult result = tool.execute("{\"action\":\"write\",\"path\":\"out.txt\",\"content\":\"hello\"}");
 
         assertThat(result.isSuccess()).isTrue();
         assertThat(Files.exists(tempDir.resolve("out.txt"))).isTrue();
@@ -31,7 +30,7 @@ class FileToolTest {
     @Test
     void shouldBlockPathTraversal(@TempDir Path tempDir) {
         FileTool tool = new FileTool(tempDir);
-        ToolResult result = tool.execute(Map.of("action", "read", "path", "../../etc/passwd"));
+        ToolResult result = tool.execute("{\"action\":\"read\",\"path\":\"../../etc/passwd\"}");
 
         assertThat(result.isSuccess()).isFalse();
         assertThat(result.getOutput()).contains("outside project root");
@@ -40,7 +39,7 @@ class FileToolTest {
     @Test
     void shouldReturnErrorForMissingFile(@TempDir Path tempDir) {
         FileTool tool = new FileTool(tempDir);
-        ToolResult result = tool.execute(Map.of("action", "read", "path", "nonexistent.txt"));
+        ToolResult result = tool.execute("{\"action\":\"read\",\"path\":\"nonexistent.txt\"}");
 
         assertThat(result.isSuccess()).isFalse();
     }

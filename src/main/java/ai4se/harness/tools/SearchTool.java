@@ -1,5 +1,7 @@
 package ai4se.harness.tools;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
@@ -8,6 +10,7 @@ import java.util.stream.Stream;
 import java.util.stream.Collectors;
 
 public class SearchTool implements Tool {
+    private static final ObjectMapper MAPPER = new ObjectMapper();
     private final Path projectRoot;
 
     public SearchTool(Path projectRoot) {
@@ -15,13 +18,28 @@ public class SearchTool implements Tool {
     }
 
     @Override
-    public String name() { return "search"; }
+    public String getName() { return "search"; }
 
     @Override
-    public String description() { return "Search files: grep for content, glob for filenames"; }
+    public String getDescription() { return "Search files: grep for content, glob for filenames"; }
 
     @Override
-    public ToolResult execute(Map<String, Object> params) {
+    public String getParameters() {
+        return "{\"type\":\"object\",\"properties\":{"
+            + "\"action\":{\"type\":\"string\",\"enum\":[\"grep\",\"glob\"],\"description\":\"Search action\"},"
+            + "\"pattern\":{\"type\":\"string\",\"description\":\"Search pattern\"}"
+            + "},\"required\":[\"pattern\"]}";
+    }
+
+    @Override
+    public ToolResult execute(String args) {
+        Map<String, Object> params;
+        try {
+            params = MAPPER.readValue(args, new TypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            return new ToolResult(false, "Invalid arguments: " + e.getMessage());
+        }
+
         String action = (String) params.getOrDefault("action", "grep");
         String pattern = (String) params.get("pattern");
         if (pattern == null) return new ToolResult(false, "Missing required parameter: pattern");

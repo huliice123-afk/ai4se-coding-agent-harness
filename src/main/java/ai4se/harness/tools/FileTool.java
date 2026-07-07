@@ -1,13 +1,15 @@
 package ai4se.harness.tools;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class FileTool implements Tool {
+    private static final ObjectMapper MAPPER = new ObjectMapper();
     private final Path projectRoot;
 
     public FileTool(Path projectRoot) {
@@ -15,13 +17,30 @@ public class FileTool implements Tool {
     }
 
     @Override
-    public String name() { return "file"; }
+    public String getName() { return "file"; }
 
     @Override
-    public String description() { return "Read, write, or glob files within the project"; }
+    public String getDescription() { return "Read, write, or glob files within the project"; }
 
     @Override
-    public ToolResult execute(Map<String, Object> params) {
+    public String getParameters() {
+        return "{\"type\":\"object\",\"properties\":{"
+            + "\"action\":{\"type\":\"string\",\"enum\":[\"read\",\"write\",\"glob\"],\"description\":\"Operation to perform\"},"
+            + "\"path\":{\"type\":\"string\",\"description\":\"File path relative to project root\"},"
+            + "\"content\":{\"type\":\"string\",\"description\":\"Content to write (for write action)\"},"
+            + "\"pattern\":{\"type\":\"string\",\"description\":\"Glob pattern (for glob action)\"}"
+            + "},\"required\":[\"path\"]}";
+    }
+
+    @Override
+    public ToolResult execute(String args) {
+        Map<String, Object> params;
+        try {
+            params = MAPPER.readValue(args, new TypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            return new ToolResult(false, "Invalid arguments: " + e.getMessage());
+        }
+
         String action = (String) params.getOrDefault("action", "read");
         String path = (String) params.get("path");
         if (path == null) return new ToolResult(false, "Missing required parameter: path");

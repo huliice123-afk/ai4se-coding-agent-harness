@@ -1,11 +1,14 @@
 package ai4se.harness.tools;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.*;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class GitTool implements Tool {
+    private static final ObjectMapper MAPPER = new ObjectMapper();
     private final Path projectRoot;
 
     public GitTool(Path projectRoot) {
@@ -13,13 +16,27 @@ public class GitTool implements Tool {
     }
 
     @Override
-    public String name() { return "git"; }
+    public String getName() { return "git"; }
 
     @Override
-    public String description() { return "Git operations: status, diff, commit, branch, log"; }
+    public String getDescription() { return "Git operations: status, diff, commit, branch, log"; }
 
     @Override
-    public ToolResult execute(Map<String, Object> params) {
+    public String getParameters() {
+        return "{\"type\":\"object\",\"properties\":{"
+            + "\"action\":{\"type\":\"string\",\"enum\":[\"status\",\"diff\",\"diff-staged\",\"log\",\"branch\"],\"description\":\"Git action to perform\"}"
+            + "},\"required\":[\"action\"]}";
+    }
+
+    @Override
+    public ToolResult execute(String args) {
+        Map<String, Object> params;
+        try {
+            params = MAPPER.readValue(args, new TypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            return new ToolResult(false, "Invalid arguments: " + e.getMessage());
+        }
+
         String action = (String) params.get("action");
         if (action == null) return new ToolResult(false, "Missing required parameter: action");
 

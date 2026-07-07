@@ -1,10 +1,13 @@
 package ai4se.harness.tools;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.*;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class ShellTool implements Tool {
+    private static final ObjectMapper MAPPER = new ObjectMapper();
     private final long timeoutSeconds;
 
     public ShellTool(long timeoutSeconds) {
@@ -12,13 +15,27 @@ public class ShellTool implements Tool {
     }
 
     @Override
-    public String name() { return "shell"; }
+    public String getName() { return "shell"; }
 
     @Override
-    public String description() { return "Execute shell commands"; }
+    public String getDescription() { return "Execute shell commands"; }
 
     @Override
-    public ToolResult execute(Map<String, Object> params) {
+    public String getParameters() {
+        return "{\"type\":\"object\",\"properties\":{"
+            + "\"command\":{\"type\":\"string\",\"description\":\"Shell command to execute\"}"
+            + "},\"required\":[\"command\"]}";
+    }
+
+    @Override
+    public ToolResult execute(String args) {
+        Map<String, Object> params;
+        try {
+            params = MAPPER.readValue(args, new TypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            return new ToolResult(false, "Invalid arguments: " + e.getMessage());
+        }
+
         String command = (String) params.get("command");
         if (command == null) return new ToolResult(false, "Missing required parameter: command");
 

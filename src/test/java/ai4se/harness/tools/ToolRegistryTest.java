@@ -1,44 +1,51 @@
 package ai4se.harness.tools;
 
 import org.junit.jupiter.api.Test;
-import java.util.Map;
 import static org.assertj.core.api.Assertions.*;
 
 class ToolRegistryTest {
     @Test
-    void shouldRegisterAndRetrieveTool() {
+    void getToolReturnsRegisteredTool() {
         ToolRegistry registry = new ToolRegistry();
-        Tool tool = new Tool() {
-            public String name() { return "test"; }
-            public String description() { return "test tool"; }
-            public ToolResult execute(Map<String, Object> params) {
-                return new ToolResult(true, "ok");
-            }
-        };
+        Tool tool = new StubTool("test", "test tool", "{}");
         registry.register(tool);
-        assertThat(registry.get("test")).isPresent();
-        assertThat(registry.get("test").get().name()).isEqualTo("test");
+        assertThat(registry.getTool("test")).isPresent();
+        assertThat(registry.getTool("test").get().getName()).isEqualTo("test");
     }
 
     @Test
-    void shouldReturnEmptyForUnknownTool() {
+    void getToolReturnsEmptyForNonExistent() {
         ToolRegistry registry = new ToolRegistry();
-        assertThat(registry.get("unknown")).isEmpty();
+        assertThat(registry.getTool("unknown")).isEmpty();
     }
 
     @Test
-    void shouldListAllTools() {
+    void getToolDefinitionsReturnsAllToolsWithSchemas() {
         ToolRegistry registry = new ToolRegistry();
-        registry.register(new Tool() {
-            public String name() { return "a"; }
-            public String description() { return "a"; }
-            public ToolResult execute(Map<String, Object> p) { return new ToolResult(true, ""); }
-        });
-        registry.register(new Tool() {
-            public String name() { return "b"; }
-            public String description() { return "b"; }
-            public ToolResult execute(Map<String, Object> p) { return new ToolResult(true, ""); }
-        });
-        assertThat(registry.getAll()).hasSize(2);
+        registry.register(new StubTool("a", "desc a", "{\"type\":\"object\"}"));
+        registry.register(new StubTool("b", "desc b", "{\"type\":\"object\"}"));
+        var defs = registry.getToolDefinitions();
+        assertThat(defs).hasSize(2);
+        assertThat(defs.get(0).name()).isEqualTo("a");
+        assertThat(defs.get(0).description()).isEqualTo("desc a");
+        assertThat(defs.get(0).parameters()).isEqualTo("{\"type\":\"object\"}");
+        assertThat(defs.get(1).name()).isEqualTo("b");
+    }
+
+    static class StubTool implements Tool {
+        private final String name;
+        private final String desc;
+        private final String params;
+
+        StubTool(String name, String desc, String params) {
+            this.name = name;
+            this.desc = desc;
+            this.params = params;
+        }
+
+        @Override public String getName() { return name; }
+        @Override public String getDescription() { return desc; }
+        @Override public String getParameters() { return params; }
+        @Override public ToolResult execute(String args) { return new ToolResult(true, "ok"); }
     }
 }
