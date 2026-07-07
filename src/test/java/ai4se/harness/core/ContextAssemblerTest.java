@@ -5,11 +5,11 @@ import ai4se.harness.llm.Message;
 import ai4se.harness.memory.FileMemoryStore;
 import ai4se.harness.memory.MemoryRetriever;
 import ai4se.harness.tools.Tool;
+import ai4se.harness.tools.ToolResult;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import static org.assertj.core.api.Assertions.*;
 
 class ContextAssemblerTest {
@@ -30,9 +30,29 @@ class ContextAssemblerTest {
         assertThat(messages.get(messages.size() - 1).getContent()).isEqualTo("write a test");
     }
 
+    @Test
+    void shouldIncludeToolParameterDescriptions(@TempDir Path tempDir) {
+        FileMemoryStore store = new FileMemoryStore(tempDir);
+        MemoryRetriever retriever = new MemoryRetriever(store);
+        List<Tool> tools = List.of(new TestTool());
+
+        List<Message> messages = assembler.assemble("write a test", tools, retriever, new Conversation());
+
+        String systemPrompt = messages.get(0).getContent();
+        assertThat(systemPrompt).contains("test-tool");
+        assertThat(systemPrompt).contains("test description");
+        assertThat(systemPrompt).contains("test-params");
+        assertThat(systemPrompt).contains("Parameters");
+    }
+
     static class TestTool implements Tool {
-        public String name() { return "test"; }
-        public String description() { return "test tool"; }
-        public ai4se.harness.tools.ToolResult execute(Map<String, Object> p) { return null; }
+        @Override
+        public String getName() { return "test-tool"; }
+        @Override
+        public String getDescription() { return "test description"; }
+        @Override
+        public String getParameters() { return "test-params"; }
+        @Override
+        public ToolResult execute(String args) { return new ToolResult(true, "ok"); }
     }
 }

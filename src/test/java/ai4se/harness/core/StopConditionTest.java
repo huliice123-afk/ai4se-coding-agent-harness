@@ -2,7 +2,6 @@ package ai4se.harness.core;
 
 import ai4se.harness.llm.LlmResponse;
 import org.junit.jupiter.api.Test;
-import java.util.Map;
 import static org.assertj.core.api.Assertions.*;
 
 class StopConditionTest {
@@ -16,13 +15,13 @@ class StopConditionTest {
 
     @Test
     void shouldStopOnMaxRounds() {
-        LlmResponse resp = new LlmResponse(null, "shell", Map.of(), "tool_use");
+        LlmResponse resp = new LlmResponse(null, "shell", "{\"command\":\"ls\"}", "tool_use");
         assertThat(stopCondition.shouldStop(resp, 10, 10)).isTrue();
     }
 
     @Test
     void shouldContinueOnToolUse() {
-        LlmResponse resp = new LlmResponse(null, "shell", Map.of(), "tool_use");
+        LlmResponse resp = new LlmResponse(null, "shell", "{\"command\":\"ls\"}", "tool_use");
         assertThat(stopCondition.shouldStop(resp, 5, 10)).isFalse();
     }
 }

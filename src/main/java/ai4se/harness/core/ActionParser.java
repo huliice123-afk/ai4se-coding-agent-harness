@@ -4,9 +4,9 @@ import ai4se.harness.llm.LlmResponse;
 
 public class ActionParser {
     public Action parse(LlmResponse response) {
-        if (response.hasAction()) {
-            return new Action(response.getActionName(), response.getActionParams());
+        if (response == null || !response.hasToolCall()) {
+            return null;
         }
-        return null;
+        return new Action(response.getToolName(), response.getToolArgs());
     }
 }

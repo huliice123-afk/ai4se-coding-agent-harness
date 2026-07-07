@@ -3,17 +3,25 @@ package ai4se.harness.core;
 import ai4se.harness.config.HarnessConfig;
 import ai4se.harness.feedback.Feedback;
 import ai4se.harness.feedback.FeedbackPipeline;
+import ai4se.harness.feedback.FailureType;
+import ai4se.harness.feedback.Severity;
 import ai4se.harness.guardrails.GuardResult;
 import ai4se.harness.guardrails.GuardrailChain;
 import ai4se.harness.llm.*;
 import ai4se.harness.memory.MemoryRetriever;
 import ai4se.harness.tools.*;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Scanner;
 
 public class AgentLoop {
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
     private final LlmProvider llm;
     private final ToolRegistry tools;
     private final GuardrailChain guardrails;
@@ -57,31 +65,41 @@ public class AgentLoop {
             List<Message> messages = assembler.assemble(task, tools.getAll(), memory, history);
             LlmResponse response = llm.complete(messages, tools.getAll());
 
+            if (response == null) {
+                System.out.println("[Agent] Empty response, stopping.");
+                break;
+            }
+
             if (stopCondition.shouldStop(response, round, config.getLoop().getMaxRounds())) {
-                return response.getText() != null ? response.getText() : "Completed.";
+                String text = response.getText();
+                if (text != null) {
+                    System.out.println("[Agent] " + text);
+                }
+                return text != null ? text : "Completed.";
             }
 
             Action action = parser.parse(response);
+
             if (action == null) {
                 String text = response.getText();
-                if (text == null || text.isBlank()) {
-                    System.out.println("LLM returned empty response, stopping");
-                    return "Agent stopped: received empty response from LLM after " + round + " rounds.";
+                if (text != null && !text.isBlank()) {
+                    System.out.println("[Agent] " + text);
+                    history.add(new Message("assistant", text));
+                    resultSummary.append(text).append("\n");
+                } else {
+                    System.out.println("[Agent] Empty response, stopping.");
                 }
-                System.out.println(text);
-                history.add(new Message("assistant", text));
-                resultSummary.append(text).append("\n");
-                correctionRound = 0;
-                continue;
+                break;
             }
 
-            System.out.println("[Tool: " + action.getToolName() + "]");
+            System.out.println("[Tool] " + action.getToolName());
 
-            GuardResult guard = guardrails.check(action.getToolName(), action.getParams());
+            Map<String, Object> params = parseParams(action.getToolArgs());
+            GuardResult guard = guardrails.check(action.getToolName(), params);
             if (!handleGuardrailResult(guard, action)) {
-                Feedback fb = new Feedback(false, ai4se.harness.feedback.FailureType.COMMAND_REJECTED,
-                    ai4se.harness.feedback.Severity.FATAL, guard.getReason());
-                history.add(new Message("user", "[FEEDBACK] " + fb.getSuggestion()));
+                Feedback fb = new Feedback(false, FailureType.COMMAND_REJECTED,
+                    Severity.CRITICAL, guard.getReason());
+                history.add(new Message("user", "[FEEDBACK] " + fb.getMessage()));
                 correctionRound++;
                 if (correctionRound > config.getFeedback().getMaxRounds()) {
                     return "Failed after " + correctionRound + " correction rounds.";
@@ -89,20 +107,21 @@ public class AgentLoop {
                 continue;
             }
 
-            Optional<Tool> tool = tools.get(action.getToolName());
+            Optional<Tool> tool = tools.getTool(action.getToolName());
             if (tool.isEmpty()) {
                 history.add(new Message("user", "[FEEDBACK] Unknown tool: " + action.getToolName()));
                 continue;
             }
 
-            ToolResult toolResult = tool.get().execute(action.getParams());
-            System.out.println(toolResult.getOutput());
-            Feedback fb = feedback.process(toolResult, action.getToolName(), round);
+            ToolResult toolResult = tool.get().execute(action.getToolArgs());
+            System.out.println("[Tool] " + action.getToolName() + " → " + toolResult.getOutput());
+
+            Feedback fb = feedback.collect(toolResult);
 
             if (!fb.isSuccess()) {
                 history.add(new Message("user", "[FEEDBACK] Failure type: " + fb.getType() +
                     "\nError details: " + toolResult.getOutput() +
-                    "\nSuggestion: " + fb.getSuggestion()));
+                    "\nSuggestion: " + fb.getMessage()));
                 correctionRound++;
                 if (correctionRound > config.getFeedback().getMaxRounds()) {
                     resultSummary.append("Failed after ").append(correctionRound).append(" correction rounds.");
@@ -113,13 +132,78 @@ public class AgentLoop {
                 resultSummary.append(toolResult.getOutput());
                 correctionRound = 0;
             }
+
+            for (String addition : feedback.getContextAdditions()) {
+                history.add(new Message("user", "[CONTEXT] " + addition));
+            }
         }
 
         String summary = resultSummary.toString();
         if (!summary.isEmpty()) {
-            memory.save("session_latest", "Task: " + task + "\nResult: " + summary);
+            memory.saveSessionSummary("Task: " + task + "\nResult: " + summary);
         }
-        return summary;
+        return summary.isEmpty() ? "Completed." : summary;
+    }
+
+    public void chat() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Chat mode. Type '退出' to exit.");
+
+        while (true) {
+            System.out.print("> ");
+            String input = scanner.nextLine();
+            if (input.equals("退出")) break;
+
+            Conversation history = new Conversation();
+            history.add(new Message("user", input));
+            int round = 0;
+
+            while (round < config.getLoop().getMaxRounds()) {
+                round++;
+                LlmResponse response = llm.complete(
+                    assembler.assemble(input, tools.getAll(), memory, history),
+                    tools.getAll());
+
+                if (response == null) {
+                    System.out.println("[Agent] Empty response, stopping.");
+                    break;
+                }
+
+                Action action = parser.parse(response);
+
+                if (action == null) {
+                    String text = response.getText();
+                    if (text != null && !text.isBlank()) {
+                        System.out.println("[Agent] " + text);
+                    }
+                    break;
+                }
+
+                Map<String, Object> params = parseParams(action.getToolArgs());
+                GuardResult guard = guardrails.check(action.getToolName(), params);
+                if (!guard.isPass()) {
+                    System.out.println("[Blocked] " + guard.getReason());
+                    history.add(new Message("assistant", "[Blocked] " + guard.getReason()));
+                    continue;
+                }
+
+                Optional<Tool> tool = tools.getTool(action.getToolName());
+                ToolResult toolResult = tool
+                    .map(t -> t.execute(action.getToolArgs()))
+                    .orElse(ToolResult.error("Unknown tool: " + action.getToolName()));
+                System.out.println("[Tool] " + action.getToolName() + " → " + toolResult.getOutput());
+                history.add(new Message("user", "[RESULT] " + toolResult.getOutput()));
+            }
+        }
+    }
+
+    private Map<String, Object> parseParams(String args) {
+        if (args == null || args.isBlank()) return Map.of();
+        try {
+            return MAPPER.readValue(args, new TypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            return Map.of();
+        }
     }
 
     boolean handleGuardrailResult(GuardResult guard, Action action) {
@@ -131,7 +215,7 @@ public class AgentLoop {
         }
         if (guard.isHitl()) {
             System.out.println("[WARNING] Human-in-the-loop: " + guard.getReason());
-            System.out.println("Action: " + action.getToolName() + " " + action.getParams());
+            System.out.println("Action: " + action.getToolName() + " " + action.getToolArgs());
             System.out.print("Proceed? (y/n): ");
             try {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));

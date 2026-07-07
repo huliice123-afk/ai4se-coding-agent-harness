@@ -11,15 +11,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import static org.assertj.core.api.Assertions.*;
 
 class AgentLoopTest {
+
     @Test
     void shouldCompleteSimpleTask(@TempDir Path tempDir) {
         MockLlmProvider mock = new MockLlmProvider();
         mock.setSequence(List.of(
-            new LlmResponse(null, "shell", Map.of("command", "echo hello"), "tool_use"),
+            new LlmResponse(null, "shell", "{\"command\":\"echo hello\"}", "tool_use"),
             new LlmResponse("Task completed", null, null, "end_turn")
         ));
 
@@ -41,10 +41,10 @@ class AgentLoopTest {
     void shouldBlockDangerousCommandAndReturnFailure(@TempDir Path tempDir) {
         MockLlmProvider mock = new MockLlmProvider();
         mock.setSequence(List.of(
-            new LlmResponse(null, "shell", Map.of("command", "rm -rf /"), "tool_use"),
-            new LlmResponse(null, "shell", Map.of("command", "rm -rf /"), "tool_use"),
-            new LlmResponse(null, "shell", Map.of("command", "rm -rf /"), "tool_use"),
-            new LlmResponse(null, "shell", Map.of("command", "rm -rf /"), "tool_use")
+            new LlmResponse(null, "shell", "{\"command\":\"rm -rf /\"}", "tool_use"),
+            new LlmResponse(null, "shell", "{\"command\":\"rm -rf /\"}", "tool_use"),
+            new LlmResponse(null, "shell", "{\"command\":\"rm -rf /\"}", "tool_use"),
+            new LlmResponse(null, "shell", "{\"command\":\"rm -rf /\"}", "tool_use")
         ));
 
         ToolRegistry registry = new ToolRegistry();
@@ -69,8 +69,8 @@ class AgentLoopTest {
     void shouldCorrectAfterFailure(@TempDir Path tempDir) {
         MockLlmProvider mock = new MockLlmProvider();
         mock.setSequence(List.of(
-            new LlmResponse(null, "shell", Map.of("command", "exit 1"), "tool_use"),
-            new LlmResponse(null, "shell", Map.of("command", "echo success"), "tool_use"),
+            new LlmResponse(null, "shell", "{\"command\":\"exit 1\"}", "tool_use"),
+            new LlmResponse(null, "shell", "{\"command\":\"echo success\"}", "tool_use"),
             new LlmResponse("Done", null, null, "end_turn")
         ));
 
@@ -92,11 +92,11 @@ class AgentLoopTest {
     void shouldStopAfterMaxRounds(@TempDir Path tempDir) {
         MockLlmProvider mock = new MockLlmProvider();
         mock.setSequence(List.of(
-            new LlmResponse(null, "shell", Map.of("command", "echo hello"), "tool_use"),
-            new LlmResponse(null, "shell", Map.of("command", "echo hello"), "tool_use"),
-            new LlmResponse(null, "shell", Map.of("command", "echo hello"), "tool_use"),
-            new LlmResponse(null, "shell", Map.of("command", "echo hello"), "tool_use"),
-            new LlmResponse(null, "shell", Map.of("command", "echo hello"), "tool_use")
+            new LlmResponse(null, "shell", "{\"command\":\"echo hello\"}", "tool_use"),
+            new LlmResponse(null, "shell", "{\"command\":\"echo hello\"}", "tool_use"),
+            new LlmResponse(null, "shell", "{\"command\":\"echo hello\"}", "tool_use"),
+            new LlmResponse(null, "shell", "{\"command\":\"echo hello\"}", "tool_use"),
+            new LlmResponse(null, "shell", "{\"command\":\"echo hello\"}", "tool_use")
         ));
 
         ToolRegistry registry = new ToolRegistry();
@@ -120,9 +120,9 @@ class AgentLoopTest {
     void shouldHandleUnknownTool(@TempDir Path tempDir) {
         MockLlmProvider mock = new MockLlmProvider();
         mock.setSequence(List.of(
-            new LlmResponse(null, "nonexistent_tool", Map.of("key", "val"), "tool_use"),
-            new LlmResponse(null, "nonexistent_tool", Map.of("key", "val"), "tool_use"),
-            new LlmResponse(null, "nonexistent_tool", Map.of("key", "val"), "tool_use")
+            new LlmResponse(null, "nonexistent_tool", "{\"key\":\"val\"}", "tool_use"),
+            new LlmResponse(null, "nonexistent_tool", "{\"key\":\"val\"}", "tool_use"),
+            new LlmResponse(null, "nonexistent_tool", "{\"key\":\"val\"}", "tool_use")
         ));
 
         ToolRegistry registry = new ToolRegistry();
@@ -139,6 +139,75 @@ class AgentLoopTest {
         );
 
         String result = loop.run("use unknown tool");
+        assertThat(result).isEqualTo("Completed.");
+    }
+
+    @Test
+    void loop_completesTaskIn4Rounds(@TempDir Path tempDir) {
+        MockLlmProvider mock = new MockLlmProvider();
+        mock.setSequence(List.of(
+            new LlmResponse(null, "shell", "{\"command\":\"echo 1\"}", "tool_use"),
+            new LlmResponse(null, "shell", "{\"command\":\"echo 2\"}", "tool_use"),
+            new LlmResponse(null, "shell", "{\"command\":\"echo 3\"}", "tool_use"),
+            new LlmResponse("Done", null, null, "end_turn")
+        ));
+
+        ToolRegistry registry = new ToolRegistry();
+        registry.register(new ShellTool(10));
+
+        AgentLoop loop = new AgentLoop(
+            mock, registry, new GuardrailChain(List.of()), new FeedbackPipeline(),
+            new ContextAssembler(), new ActionParser(), new StopCondition(),
+            new MemoryRetriever(new FileMemoryStore(tempDir)),
+            createDefaultConfig()
+        );
+
+        String result = loop.run("run 3 commands");
+        assertThat(mock.getCallCount()).isEqualTo(4);
+        assertThat(result).isEqualTo("Done");
+    }
+
+    @Test
+    void loop_textResponse_doesNotSpin(@TempDir Path tempDir) {
+        MockLlmProvider mock = new MockLlmProvider();
+        mock.setSequence(List.of(
+            new LlmResponse("I need more information to proceed.", null, null, null)
+        ));
+
+        ToolRegistry registry = new ToolRegistry();
+        registry.register(new ShellTool(10));
+
+        AgentLoop loop = new AgentLoop(
+            mock, registry, new GuardrailChain(List.of()), new FeedbackPipeline(),
+            new ContextAssembler(), new ActionParser(), new StopCondition(),
+            new MemoryRetriever(new FileMemoryStore(tempDir)),
+            createDefaultConfig()
+        );
+
+        String result = loop.run("do something");
+        assertThat(mock.getCallCount()).isEqualTo(1);
+        assertThat(result).contains("I need more information");
+    }
+
+    @Test
+    void loop_emptyResponse_doesNotSpin(@TempDir Path tempDir) {
+        MockLlmProvider mock = new MockLlmProvider();
+        mock.setSequence(List.of(
+            new LlmResponse(null, null, null, null)
+        ));
+
+        ToolRegistry registry = new ToolRegistry();
+        registry.register(new ShellTool(10));
+
+        AgentLoop loop = new AgentLoop(
+            mock, registry, new GuardrailChain(List.of()), new FeedbackPipeline(),
+            new ContextAssembler(), new ActionParser(), new StopCondition(),
+            new MemoryRetriever(new FileMemoryStore(tempDir)),
+            createDefaultConfig()
+        );
+
+        String result = loop.run("do something");
+        assertThat(mock.getCallCount()).isEqualTo(1);
         assertThat(result).isEqualTo("Completed.");
     }
 

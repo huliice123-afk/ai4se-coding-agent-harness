@@ -6,6 +6,7 @@ public class MockLlmProvider implements LlmProvider {
     private final Map<String, LlmResponse> script = new LinkedHashMap<>();
     private final List<LlmResponse> sequence = new ArrayList<>();
     private int sequenceIndex = 0;
+    private int callCount = 0;
 
     public ScriptBuilder whenInputContains(String keyword) {
         return new ScriptBuilder(this, keyword);
@@ -23,6 +24,7 @@ public class MockLlmProvider implements LlmProvider {
 
     @Override
     public LlmResponse complete(List<Message> messages, List<ai4se.harness.tools.Tool> tools) {
+        callCount++;
         if (sequenceIndex < sequence.size()) {
             return sequence.get(sequenceIndex++);
         }
@@ -33,6 +35,10 @@ public class MockLlmProvider implements LlmProvider {
             }
         }
         return new LlmResponse("Task completed.", null, null, "end_turn");
+    }
+
+    public int getCallCount() {
+        return callCount;
     }
 
     public static class ScriptBuilder {

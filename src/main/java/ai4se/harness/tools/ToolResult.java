@@ -15,6 +15,9 @@ public class ToolResult {
         this.exitCode = exitCode;
     }
 
+    public static ToolResult success(String output) { return new ToolResult(true, output); }
+    public static ToolResult error(String message) { return new ToolResult(false, message); }
+
     public boolean isSuccess() { return success; }
     public String getOutput() { return output; }
     public String getError() { return success ? null : output; }

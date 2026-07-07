@@ -1,16 +1,14 @@
 package ai4se.harness.core;
 
-import java.util.Map;
-
 public class Action {
     private final String toolName;
-    private final Map<String, Object> params;
+    private final String toolArgs;
 
-    public Action(String toolName, Map<String, Object> params) {
+    public Action(String toolName, String toolArgs) {
         this.toolName = toolName;
-        this.params = params;
+        this.toolArgs = toolArgs;
     }
 
     public String getToolName() { return toolName; }
-    public Map<String, Object> getParams() { return params; }
+    public String getToolArgs() { return toolArgs; }
 }

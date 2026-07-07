@@ -22,8 +22,8 @@ class SeverityJudgeTest {
     }
 
     @Test
-    void shouldJudgePermissionDeniedAsFatal() {
-        assertThat(judge.judge(FailureType.PERMISSION_DENIED)).isEqualTo(Severity.FATAL);
+    void shouldJudgePermissionDeniedAsCritical() {
+        assertThat(judge.judge(FailureType.PERMISSION_DENIED)).isEqualTo(Severity.CRITICAL);
     }
 
     @Test

@@ -22,17 +22,20 @@ public class ContextAssembler {
 
     private String buildSystemPrompt(List<Tool> tools, MemoryRetriever memory) {
         StringBuilder sb = new StringBuilder();
-        sb.append("You are a coding agent that completes tasks by calling tools. Respond with a tool call or text.\n\n");
+        sb.append("You are a coding agent. Use tools to complete tasks.\n\n");
         sb.append("Available tools:\n");
-        sb.append("- file: params={action:\"read\"|\"write\"|\"glob\", path:\"relative/path\", content:\"text for write\"}\n");
-        sb.append("- shell: params={command:\"shell command\"}\n");
-        sb.append("- git: params={action:\"status\"|\"diff\"|\"log\"|\"branch\"}\n");
-        sb.append("- search: params={action:\"grep\"|\"glob\", pattern:\"search pattern\"}\n");
-        sb.append("\nWhen calling a tool, always provide ALL required params. After each tool result, call the next tool or respond with text when done.\n");
+        for (Tool tool : tools) {
+            sb.append("- ").append(tool.getName())
+              .append(": ").append(tool.getDescription())
+              .append("\n  Parameters: ").append(tool.getParameters())
+              .append("\n");
+        }
+        sb.append("\nWhen calling a tool, provide ALL required params as JSON.\n");
+        sb.append("After each tool result, call the next tool or respond with text when done.\n");
 
         List<String> relevantMemories = memory.search("convention project", 3);
         if (!relevantMemories.isEmpty()) {
-            sb.append("\nRelevant memories:\n");
+            sb.append("\nPrevious session memory:\n");
             for (String mem : relevantMemories) {
                 sb.append("- ").append(mem).append("\n");
             }
