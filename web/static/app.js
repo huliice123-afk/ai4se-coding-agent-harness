@@ -77,7 +77,6 @@ function sendTask() {
 function addSession(summary) {
   sessionCount++;
   const div = document.createElement("div");
-  div.style.cssText = "padding:2px 0;cursor:pointer;color:var(--text-dim);";
   div.textContent = `${sessionCount}. ${summary || "Task " + sessionCount}`;
   sessionList.appendChild(div);
 }
