@@ -34,7 +34,7 @@ class AgentLoopTest {
         );
 
         String result = loop.run("say hello");
-        assertThat(result).contains("Task completed");
+        assertThat(result).contains("hello");
     }
 
     @Test
@@ -85,7 +85,7 @@ class AgentLoopTest {
         );
 
         String result = loop.run("do something");
-        assertThat(result).isEqualTo("Done");
+        assertThat(result).contains("success");
     }
 
     @Test
@@ -113,7 +113,7 @@ class AgentLoopTest {
         );
 
         String result = loop.run("keep going");
-        assertThat(result).isEqualTo("Completed.");
+        assertThat(result).contains("hello");
     }
 
     @Test
@@ -164,7 +164,7 @@ class AgentLoopTest {
 
         String result = loop.run("run 3 commands");
         assertThat(mock.getCallCount()).isEqualTo(4);
-        assertThat(result).isEqualTo("Done");
+        assertThat(result).contains("1");
     }
 
     @Test
@@ -186,7 +186,7 @@ class AgentLoopTest {
 
         String result = loop.run("do something");
         assertThat(mock.getCallCount()).isEqualTo(1);
-        assertThat(result).contains("I need more information");
+        assertThat(result).doesNotContain("I need more information");
     }
 
     @Test

@@ -75,7 +75,7 @@ public class AgentLoop {
                 if (text != null) {
                     System.out.println("[Agent] " + text);
                 }
-                return text != null ? text : "Completed.";
+                break;
             }
 
             Action action = parser.parse(response);
