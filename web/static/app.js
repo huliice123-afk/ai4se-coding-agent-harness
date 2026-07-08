@@ -10,7 +10,6 @@ let executing = false;
 let sessionCount = 0;
 let currentAgentBubble = null;
 let currentToolBlock = null;
-let resultStarted = false;
 
 function scrollToBottom() {
   messages.scrollTop = messages.scrollHeight;
@@ -198,12 +197,8 @@ function handleLine(line) {
   // [Round N] → hidden
   if (/^\[Round \d+\]/.test(line)) return;
 
-  // === Result === → stop processing (everything after is duplicate)
-  if (line === "=== Result ===") {
-    resultStarted = true;
-    return;
-  }
-  if (resultStarted) return;
+  // === Result === → separator, keep content after it
+  if (line === "=== Result ===") return;
 
   // [Agent] text → show
   if ((m = line.match(/^\[Agent\] (.*)$/))) {
@@ -311,7 +306,6 @@ function sendTask() {
   addUserMessage(task);
   currentAgentBubble = null;
   currentToolBlock = null;
-  resultStarted = false;
 
   executing = true;
   setInputEnabled(false);

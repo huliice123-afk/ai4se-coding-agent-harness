@@ -85,7 +85,6 @@ public class AgentLoop {
                 if (text != null && !text.isBlank()) {
                     System.out.println("[Agent] " + text);
                     history.add(new Message("assistant", text));
-                    resultSummary.append(text).append("\n");
                 } else {
                     System.out.println("[Agent] Empty response, stopping.");
                 }
