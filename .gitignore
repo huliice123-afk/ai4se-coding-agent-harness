@@ -31,3 +31,6 @@ logs/
 .superpowers/
 HelloWorld.java
 HelloWorld.class
+
+.harness/
+test

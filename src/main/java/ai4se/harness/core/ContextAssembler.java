@@ -22,7 +22,7 @@ public class ContextAssembler {
 
     private String buildSystemPrompt(List<Tool> tools, MemoryRetriever memory) {
         StringBuilder sb = new StringBuilder();
-        sb.append("You are a coding agent. Use tools to complete tasks.\n\n");
+        sb.append("You are a coding agent powered by DeepSeek. Use tools to complete tasks.\n\n");
         sb.append("Available tools:\n");
         for (Tool tool : tools) {
             sb.append("- ").append(tool.getName())
