@@ -46,7 +46,32 @@ function appendAgentText(text) {
   scrollToBottom();
 }
 
-function startToolCall(toolName) {
+function friendlyToolName(toolName) {
+  const map = {
+    "file": "正在操作文件",
+    "shell": "正在执行命令",
+    "git": "正在执行 Git 操作",
+    "search": "正在搜索"
+  };
+  return map[toolName] || ("正在执行 " + toolName);
+}
+
+function friendlyAction(action, params) {
+  try {
+    const p = JSON.parse(params);
+    if (action === "read") return "读取 " + (p.path || "");
+    if (action === "write") return "写入 " + (p.path || "");
+    if (action === "glob") return "查找 " + (p.pattern || "");
+    if (action === "execute") return "运行: " + (p.command || "");
+    if (action === "status") return "查看 Git 状态";
+    if (action === "diff") return "查看 Git 差异";
+    if (action === "log") return "查看 Git 日志";
+    if (action === "grep") return "搜索: " + (p.pattern || "");
+  } catch (e) {}
+  return null;
+}
+
+function startToolCall(toolName, detail) {
   const row = document.createElement("div");
   row.className = "msg-row agent";
 
@@ -55,8 +80,11 @@ function startToolCall(toolName) {
 
   const header = document.createElement("div");
   header.className = "tool-header";
+  const label = friendlyToolName(toolName);
+  const sub = detail ? '<span class="tool-detail">' + escapeHtml(detail) + '</span>' : '';
   header.innerHTML = '<span class="tool-caret">&#9654;</span>' +
-    '<span class="tool-name">' + escapeHtml(toolName) + '</span>' +
+    '<span class="tool-name">' + escapeHtml(label) + '</span>' +
+    sub +
     '<span class="tool-status">running</span>';
 
   const body = document.createElement("div");
@@ -98,12 +126,36 @@ function appendBlocked(reason) {
   row.className = "msg-row agent";
   const bubble = document.createElement("div");
   bubble.className = "bubble blocked-bubble";
-  bubble.textContent = "Blocked: " + reason;
+  bubble.textContent = "该操作被安全拦截";
   row.appendChild(bubble);
   messages.appendChild(row);
   currentAgentBubble = null;
   currentToolBlock = null;
   scrollToBottom();
+}
+
+function appendError(text) {
+  const friendly = friendlyError(text);
+  const row = document.createElement("div");
+  row.className = "msg-row agent";
+  const bubble = document.createElement("div");
+  bubble.className = "bubble error-bubble";
+  bubble.textContent = friendly;
+  row.appendChild(bubble);
+  messages.appendChild(row);
+  currentAgentBubble = null;
+  currentToolBlock = null;
+  scrollToBottom();
+}
+
+function friendlyError(text) {
+  if (/no files matched/i.test(text)) return "未找到匹配的文件";
+  if (/unknown tool/i.test(text)) return "操作不支持";
+  if (/missing required parameter/i.test(text)) return "参数不完整";
+  if (/file not found/i.test(text)) return "文件不存在";
+  if (/timeout/i.test(text)) return "操作超时";
+  if (/empty response/i.test(text)) return "未收到响应";
+  return text;
 }
 
 function appendInfo(text) {
@@ -141,34 +193,75 @@ function escapeHtml(s) {
 
 function handleLine(line) {
   let m;
-  if ((m = line.match(/^\[Tool\] (.+?) \u2192 (.*)$/))) {
-    appendToolResult(m[1], m[2]);
-    return;
-  }
-  if ((m = line.match(/^\[Tool\] (.+)$/))) {
-    startToolCall(m[1]);
-    return;
-  }
+
+  // [Round N] → hidden
+  if (/^\[Round \d+\]/.test(line)) return;
+
+  // === Result === → hidden
+  if (line === "=== Result ===") return;
+
+  // [Agent] text → show
   if ((m = line.match(/^\[Agent\] (.*)$/))) {
     appendAgentText(m[1]);
     return;
   }
+
+  // [Tool] toolName → output → fold into tool block
+  if ((m = line.match(/^\[Tool\] (.+?) \u2192 (.*)$/))) {
+    appendToolResult(m[1], m[2]);
+    return;
+  }
+
+  // [Tool] toolName → start tool call (simplified display)
+  if ((m = line.match(/^\[Tool\] (.+)$/))) {
+    startToolCall(m[1]);
+    return;
+  }
+
+  // Calling X with {"action":"read",...} → fold into tool block, show friendly action
+  if ((m = line.match(/^Calling (\w+) with (.+)$/))) {
+    const toolName = m[1];
+    const detail = friendlyAction(null, m[2]) || m[2];
+    startToolCall(toolName, detail);
+    // Also fold the raw params into the body
+    const raw = document.createElement("div");
+    raw.className = "tool-output";
+    raw.textContent = m[2];
+    if (currentToolBlock) currentToolBlock.body.appendChild(raw);
+    return;
+  }
+
+  // [Blocked] → simplified friendly message
   if ((m = line.match(/^\[Blocked\] (.*)$/))) {
     appendBlocked(m[1]);
     return;
   }
+
+  // [WARNING] → simplified
   if ((m = line.match(/^\[WARNING\] (.*)$/))) {
-    appendInfo("Warning: " + m[1]);
+    appendInfo(m[1]);
     return;
   }
-  if (/^\[Round \d+\]/.test(line)) return;
-  if (line === "=== Result ===") return;
+
+  // Error-like lines → friendly
+  if (/^(No files matched|Unknown tool|Missing required|File not found|Timeout|Empty response)/i.test(line)) {
+    appendError(line);
+    return;
+  }
+
+  // Previous session → info
   if (line.startsWith("Previous session:")) {
     appendInfo(line);
     return;
   }
+
+  // Chat mode prompts → hidden
   if (line.startsWith("Chat mode.") || line === ">") return;
+
+  // Empty → skip
   if (line.trim() === "") return;
+
+  // Everything else → fold into current tool block or agent bubble
   appendContinuation(line);
 }
 
@@ -197,16 +290,7 @@ socket.on("task_done", function (data) {
 socket.on("task_error", function (data) {
   executing = false;
   setInputEnabled(true);
-  const row = document.createElement("div");
-  row.className = "msg-row agent";
-  const bubble = document.createElement("div");
-  bubble.className = "bubble error-bubble";
-  bubble.textContent = data.error || "Error";
-  row.appendChild(bubble);
-  messages.appendChild(row);
-  currentAgentBubble = null;
-  currentToolBlock = null;
-  scrollToBottom();
+  appendError(data.error || "Error");
 });
 
 function setInputEnabled(enabled) {

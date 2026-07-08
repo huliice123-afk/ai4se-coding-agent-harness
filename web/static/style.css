@@ -297,6 +297,12 @@ html, body {
   font-weight: 500;
 }
 
+.tool-detail {
+  color: var(--text-dim);
+  font-size: 12px;
+  margin-left: 8px;
+}
+
 .tool-status {
   margin-left: auto;
   font-size: 11px;
